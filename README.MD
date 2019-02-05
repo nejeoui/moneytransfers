@@ -1,2 +1,2 @@
 # Money Transfers
-## Java lightweight Restful API for Money TransferS
+## Java lightweight Restful API for Money Transfers
