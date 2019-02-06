@@ -13,21 +13,22 @@ import com.revolut.moneytransfers.model.Account;
 public class AccountService {
 	@Inject
 	AccountDaoImpl accountDao;
-	
+
 	public Account save(Account account) {
 		return accountDao.save(account);
 	}
-	
-	public List<Account> selectAll(){
+
+	public List<Account> selectAll() {
 		return accountDao.selectAll();
 	}
-	public List<Account> selectByBeneficiaryPhone(String phone){
+
+	public List<Account> selectByBeneficiaryPhone(String phone) {
 		System.out.println("layer2");
 		return accountDao.selectByBeneficiaryPhone(phone);
 	}
-	public Optional<Account> selectByBeneficiaryPhoneAndCurrency(String phone,String currency){
-		 return accountDao.selectByBeneficiaryPhoneAndCurrency(phone, currency);
-	 }
 
+	public Optional<Account> selectByBeneficiaryPhoneAndCurrency(String phone, String currency) {
+		return accountDao.selectByBeneficiaryPhoneAndCurrency(phone, currency);
+	}
 
 }

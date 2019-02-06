@@ -12,36 +12,53 @@ import javax.persistence.NamedQuery;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
-@NamedQuery(name="Account.selectAll",query="SELECT a FROM Account a ")	
-@NamedQuery(name="Account.selectByBeneficiaryPhone",query="SELECT a FROM Account a WHERE a.beneficiary.phone = :phone1")	
-@NamedQuery(name="Account.selectByBeneficiaryPhoneAndCurrency",query="SELECT a FROM Account a WHERE a.beneficiary.phone = :phone1 AND a.accountID.currency= :currency1")	
+
+/**
+ * A Revolut {@code Account}
+ * <p>
+ * Each {@code Account} is bound to a single currency and a unique
+ * {@code Beneficiary}
+ * <p>
+ * Each {@code Account} has a unique combination of (IBAN,BIC)
+ *
+ * @author <a href="mailto:a.nejeoui@gmail.com">Abderrazzak Nejeoui</a>
+ * @see Beneficiary
+ * @see Transfer
+ * @since 1.0
+ */
+@NamedQuery(name = "Account.selectAll", query = "SELECT a FROM Account a ")
+@NamedQuery(name = "Account.selectByBeneficiaryPhone", query = "SELECT a FROM Account a WHERE a.beneficiary.phone = :phone1")
+@NamedQuery(name = "Account.selectByBeneficiaryPhoneAndCurrency", query = "SELECT a FROM Account a WHERE a.beneficiary.phone = :phone1 AND a.accountID.currency= :currency1")
 @Entity
 /*
  * 
  * */
-@Table(uniqueConstraints={
-	    @UniqueConstraint(columnNames = {"iban", "bic"})
-	}) 
+@Table(uniqueConstraints = { @UniqueConstraint(columnNames = { "iban", "bic" }) })
 public class Account {
 	@EmbeddedId
 	private AccountID accountID;
 	@MapsId("phone")
 	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name="accountHolder_phone", referencedColumnName="phone",insertable=false, updatable=false,nullable=false)
-	private Beneficiary beneficiary; 
+	@JoinColumn(name = "accountHolder_phone", referencedColumnName = "phone", insertable = false, updatable = false, nullable = false)
+	private Beneficiary beneficiary;
 	private String country;
 	private String label;
 	private String iban;
 	private String bic;
-	@OneToMany(mappedBy="creditedAccount")
+	@OneToMany(mappedBy = "creditedAccount")
 	private List<Transfer> credits;
-	
-	@OneToMany(mappedBy="debitedAccount")
+
+	@OneToMany(mappedBy = "debitedAccount")
 	private List<Transfer> debits;
-	
-	
+
 	private double balance;
 
+	/**
+	 * Returns the account beneficiary.
+	 *
+	 * @return the account beneficiary.
+	 * 
+	 */
 	public Beneficiary getBeneficiary() {
 		return beneficiary;
 	}
@@ -105,10 +122,6 @@ public class Account {
 	public void setBalance(double balance) {
 		this.balance = balance;
 	}
-	
-	
-	
-	
 
 	public AccountID getAccountID() {
 		return accountID;
@@ -123,12 +136,13 @@ public class Account {
 		super();
 	}
 
-	public Account(Beneficiary beneficiary, String currency, String country, String label, String iban, String bic) throws IllegalArgumentException {
+	public Account(Beneficiary beneficiary, String currency, String country, String label, String iban, String bic)
+			throws IllegalArgumentException {
 		super();
-		if(beneficiary==null||country==null
-			||iban==null||bic==null)throw new IllegalArgumentException("null values ");
-		AccountID accountID=new AccountID( currency);
-		this.accountID=accountID;
+		if (beneficiary == null || country == null || iban == null || bic == null)
+			throw new IllegalArgumentException("null values ");
+		AccountID accountID = new AccountID(currency);
+		this.accountID = accountID;
 		this.beneficiary = beneficiary;
 		this.country = country;
 		this.label = label;
@@ -136,12 +150,14 @@ public class Account {
 		this.bic = bic;
 		this.balance = 0;
 	}
-	
+
 	@Override
 	public boolean equals(Object obj) {
-		if(!(obj instanceof Account)) return false;
-		Account account=(Account)obj;
-		return beneficiary.getPhone().equals(account.getBeneficiary().getPhone())&&this.getAccountID().getCurrency().equals(account.getAccountID().getCurrency());
+		if (!(obj instanceof Account))
+			return false;
+		Account account = (Account) obj;
+		return beneficiary.getPhone().equals(account.getBeneficiary().getPhone())
+				&& this.getAccountID().getCurrency().equals(account.getAccountID().getCurrency());
 	}
-	
+
 }

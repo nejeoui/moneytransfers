@@ -1,8 +1,14 @@
 package com.revolut.moneytransfers.dao;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
 
 import java.util.List;
+
+import javax.enterprise.inject.Instance;
+import javax.enterprise.inject.se.SeContainer;
+import javax.enterprise.inject.se.SeContainerInitializer;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -10,9 +16,10 @@ import org.junit.Test;
 import com.revolut.moneytransfers.AccountDaoImpl;
 import com.revolut.moneytransfers.model.Account;
 import com.revolut.moneytransfers.model.Beneficiary;
+import com.revolut.moneytransfers.service.AccountService;
 
-public class AccountDaoTest {
-	@Before
+public class MoneyTransfersAPITest {
+	@Test
 	public void create2AccountSameBeneficiary() {
 		AccountDaoImpl accountDao = new AccountDaoImpl();
 		// Generate database Schema
@@ -66,9 +73,32 @@ public class AccountDaoTest {
 
 	@Test
 	public void transfer() {
-		// update balance for account 1 500
-		// update balance for account 2 1290
-		// transfer 350 from account2 to account 1
+		fail("Not implemented");
+
+	}
+
+	@Test
+	public void topUpAccount() {
+		fail("Not implemented");
+
+	}
+
+	@Test
+	public void testCDI() {
+		System.out.println("CDI Test Start");
+		Account account = new Account(new Beneficiary("000000", "Fname", "Lname"), "GBP", "UK", "label acc",
+				"IBAN XXXXX", "BIC XXXX");
+		Account accountFromDB = null;
+		SeContainerInitializer initializer = SeContainerInitializer.newInstance();
+		try (SeContainer seContainer = initializer.initialize()) {
+			Instance<AccountService> LazyAccountService = seContainer.select(AccountService.class);
+			AccountService accountService = LazyAccountService.get();
+			accountService.save(account);
+			accountFromDB = accountService.selectByBeneficiaryPhoneAndCurrency(account.getAccountID().getPhone(),
+					account.getAccountID().getCurrency()).get();
+		}
+		assertNotNull(accountFromDB);
+		System.out.println("CDI Test End");
 
 	}
 

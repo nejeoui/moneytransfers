@@ -5,9 +5,21 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.*;
 import javax.persistence.ManyToOne;
 
+/**
+ * A Money {@code Transfer} between two Revolut {@code Account}
+ * <p>
+ * Each {@code Account} is bound to a single currency and a unique
+ * {@code Beneficiary}
+ * <p>
+ * Each {@code Account} has a unique combination of (IBAN,BIC)
+ *
+ * @author <a href="mailto:a.nejeoui@gmail.com">Abderrazzak Nejeoui</a>
+ * @see Beneficiary
+ * @see Account
+ * @since 1.0
+ */
 @Entity
 public class Transfer {
 	@Id
