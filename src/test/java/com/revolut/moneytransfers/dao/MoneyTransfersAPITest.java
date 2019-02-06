@@ -9,7 +9,11 @@ import java.util.List;
 import javax.enterprise.inject.Instance;
 import javax.enterprise.inject.se.SeContainer;
 import javax.enterprise.inject.se.SeContainerInitializer;
+import javax.ws.rs.ext.RuntimeDelegate;
 
+import org.glassfish.grizzly.http.server.HttpHandler;
+import org.glassfish.grizzly.http.server.HttpServer;
+import org.glassfish.jersey.server.ResourceConfig;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -17,6 +21,10 @@ import com.revolut.moneytransfers.AccountDaoImpl;
 import com.revolut.moneytransfers.model.Account;
 import com.revolut.moneytransfers.model.Beneficiary;
 import com.revolut.moneytransfers.service.AccountService;
+import com.revolut.moneytransfers.service.rest.AccountRest;
+import com.revolut.moneytransfers.service.rest.HelloRest;
+import com.revolut.moneytransfers.test.RestServer;
+import com.revolut.moneytransfers.util.HttpUtil;
 
 public class MoneyTransfersAPITest {
 	@Test
@@ -96,10 +104,23 @@ public class MoneyTransfersAPITest {
 			accountService.save(account);
 			accountFromDB = accountService.selectByBeneficiaryPhoneAndCurrency(account.getAccountID().getPhone(),
 					account.getAccountID().getCurrency()).get();
+		seContainer.close();
 		}
 		assertNotNull(accountFromDB);
 		System.out.println("CDI Test End");
 
 	}
+	@Test
+	public void testJaxRs() {
+		String hello;
+		try {
+			hello = HttpUtil.get("http://localhost:8080/hello");
+			assertEquals("Hello Jax-RS", hello);
+		} catch (Exception e) {
+			fail(e.getMessage());
+		}
+		
+	}
+	
 
 }
