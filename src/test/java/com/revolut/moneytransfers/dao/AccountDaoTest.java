@@ -7,9 +7,9 @@ import java.util.List;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.revolut.moneytransfers.AccountDaoImpl;
 import com.revolut.moneytransfers.model.Account;
 import com.revolut.moneytransfers.model.Beneficiary;
-import com.revolut.moneytransfers.model.dao.AccountDaoImpl;
 
 public class AccountDaoTest {
 	@Before

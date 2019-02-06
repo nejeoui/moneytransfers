@@ -1,4 +1,4 @@
-package com.revolut.moneytransfers.model.dao;
+package com.revolut.moneytransfers;
 
 import java.util.List;
 import java.util.Optional;
@@ -10,6 +10,7 @@ import javax.persistence.Persistence;
 import javax.persistence.Query;
 
 import com.revolut.moneytransfers.model.Account;
+import com.revolut.moneytransfers.model.dao.AccountDao;
 
 public class AccountDaoImpl implements AccountDao {
 	EntityManagerFactory emf=null;
@@ -32,6 +33,7 @@ public class AccountDaoImpl implements AccountDao {
 	@SuppressWarnings("unchecked")
 	@Override
 	public List<Account> selectByBeneficiaryPhone(String phone) {
+		System.out.println(phone+" Phone traversed 3 layers here !");
 		Query query=em.createNamedQuery("Account.selectByBeneficiaryPhone");
 		query.setParameter("phone1", phone);
 		return query.getResultList();
