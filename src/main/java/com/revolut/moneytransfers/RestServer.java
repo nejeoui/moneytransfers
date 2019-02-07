@@ -1,18 +1,25 @@
-package com.revolut.moneytransfers.test;
+package com.revolut.moneytransfers;
 
 import javax.ws.rs.ext.RuntimeDelegate;
 
 import org.glassfish.grizzly.http.server.HttpHandler;
 import org.glassfish.grizzly.http.server.HttpServer;
 import org.glassfish.jersey.server.ResourceConfig;
+import org.jboss.weld.environment.se.Weld;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.revolut.moneytransfers.service.rest.AccountRest;
 import com.revolut.moneytransfers.service.rest.HelloRest;
 
 public class RestServer {
+	private static Logger logger = LoggerFactory.getLogger(RestServer.class);
 
 	public static void main(String args[]) {
 		try {
+			Weld weld = new Weld();
+			weld.initialize();
+
 			ResourceConfig resourceConfig = new ResourceConfig();
 			resourceConfig.register(AccountRest.class);
 			resourceConfig.register(HelloRest.class);
@@ -21,9 +28,9 @@ public class RestServer {
 			server.getServerConfiguration().addHttpHandler(handler);
 			new Thread(() -> {
 				try {
-					System.out.println("Starting...!");
+					logger.info("Starting...!");
 					server.start();
-					System.out.println("http Server started!");
+					logger.info("http Server started!");
 					System.in.read();
 				} catch (Exception ex) {
 					ex.printStackTrace();

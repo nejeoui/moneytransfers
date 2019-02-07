@@ -3,6 +3,8 @@ package com.revolut.moneytransfers.model.dao;
 import java.util.List;
 import java.util.Optional;
 
+import javax.ws.rs.Produces;
+
 import com.revolut.moneytransfers.model.Account;
 import com.revolut.moneytransfers.model.Beneficiary;
 
@@ -17,6 +19,7 @@ import com.revolut.moneytransfers.model.Beneficiary;
  * @see AccountDaoImpl
  * @since 1.0
  */
+@Produces()
 public interface AccountDao {
 	/**
 	 * Adds new Account to the database.

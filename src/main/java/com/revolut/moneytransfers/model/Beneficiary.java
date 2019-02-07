@@ -2,11 +2,14 @@ package com.revolut.moneytransfers.model;
 
 import java.util.List;
 
+import javax.enterprise.context.ApplicationScoped;
 import javax.persistence.Column;
 import javax.persistence.Embedded;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.OneToMany;
+
+import lombok.Data;
 
 /**
  * A Revolut {@code Account} holder
@@ -19,6 +22,7 @@ import javax.persistence.OneToMany;
  * @see Transfer
  * @since 1.0
  */
+@Data
 @Entity
 public class Beneficiary {
 	@Id
@@ -34,47 +38,6 @@ public class Beneficiary {
 	@Embedded
 	private Address address;
 
-	public String getPhone() {
-		return phone;
-	}
-
-	public void setPhone(String phone) {
-		this.phone = phone;
-	}
-
-	public String getFirstName() {
-		return firstName;
-	}
-
-	public void setFirstName(String firstName) {
-		this.firstName = firstName;
-	}
-
-	public String getMiddletName() {
-		return middletName;
-	}
-
-	public void setMiddletName(String middletName) {
-		this.middletName = middletName;
-	}
-
-	public String getLastName() {
-		return lastName;
-	}
-
-	public void setLastName(String lastName) {
-		this.lastName = lastName;
-	}
-
-	public Address getAddress() {
-		return address;
-	}
-
-	public void setAddress(Address address) {
-		this.address = address;
-	}
-
-	@Deprecated
 	public Beneficiary() {
 		super();
 	}

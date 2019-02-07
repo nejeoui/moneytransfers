@@ -13,6 +13,8 @@ import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 
+import lombok.Data;
+
 /**
  * A Revolut {@code Account}
  * <p>
@@ -29,6 +31,7 @@ import javax.persistence.UniqueConstraint;
 @NamedQuery(name = "Account.selectAll", query = "SELECT a FROM Account a ")
 @NamedQuery(name = "Account.selectByBeneficiaryPhone", query = "SELECT a FROM Account a WHERE a.beneficiary.phone = :phone1")
 @NamedQuery(name = "Account.selectByBeneficiaryPhoneAndCurrency", query = "SELECT a FROM Account a WHERE a.beneficiary.phone = :phone1 AND a.accountID.currency= :currency1")
+@Data
 @Entity
 /*
  * 
@@ -37,6 +40,11 @@ import javax.persistence.UniqueConstraint;
 public class Account {
 	@EmbeddedId
 	private AccountID accountID;
+	
+	/**
+	 *  the account beneficiary.
+	 *
+	 */
 	@MapsId("phone")
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "accountHolder_phone", referencedColumnName = "phone", insertable = false, updatable = false, nullable = false)
@@ -45,93 +53,15 @@ public class Account {
 	private String label;
 	private String iban;
 	private String bic;
+	private double balance;
 	@OneToMany(mappedBy = "creditedAccount")
 	private List<Transfer> credits;
 
 	@OneToMany(mappedBy = "debitedAccount")
 	private List<Transfer> debits;
 
-	private double balance;
-
-	/**
-	 * Returns the account beneficiary.
-	 *
-	 * @return the account beneficiary.
-	 * 
-	 */
-	public Beneficiary getBeneficiary() {
-		return beneficiary;
-	}
-
-	public void setBeneficiary(Beneficiary beneficiary) {
-		this.beneficiary = beneficiary;
-	}
-
-	public String getCountry() {
-		return country;
-	}
-
-	public void setCountry(String country) {
-		this.country = country;
-	}
-
-	public String getLabel() {
-		return label;
-	}
-
-	public void setLabel(String label) {
-		this.label = label;
-	}
-
-	public String getIban() {
-		return iban;
-	}
-
-	public void setIban(String iban) {
-		this.iban = iban;
-	}
-
-	public String getBic() {
-		return bic;
-	}
-
-	public void setBic(String bic) {
-		this.bic = bic;
-	}
-
-	public List<Transfer> getCredits() {
-		return credits;
-	}
-
-	public void setCredits(List<Transfer> credits) {
-		this.credits = credits;
-	}
-
-	public List<Transfer> getDebits() {
-		return debits;
-	}
-
-	public void setDebits(List<Transfer> debits) {
-		this.debits = debits;
-	}
-
-	public double getBalance() {
-		return balance;
-	}
-
-	public void setBalance(double balance) {
-		this.balance = balance;
-	}
-
-	public AccountID getAccountID() {
-		return accountID;
-	}
-
-	public void setAccountID(AccountID accountID) {
-		this.accountID = accountID;
-	}
-
-	@Deprecated
+	
+	
 	public Account() {
 		super();
 	}
@@ -159,5 +89,8 @@ public class Account {
 		return beneficiary.getPhone().equals(account.getBeneficiary().getPhone())
 				&& this.getAccountID().getCurrency().equals(account.getAccountID().getCurrency());
 	}
-
+	@Override
+	public int hashCode() {
+		return this.accountID.hashCode();
+	}
 }

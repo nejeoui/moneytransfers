@@ -1,13 +1,16 @@
-package com.revolut.moneytransfers;
+package com.revolut.moneytransfers.dao;
 
 import java.util.List;
 import java.util.Optional;
 
+import javax.enterprise.context.ApplicationScoped;
+import javax.inject.Inject;
 import javax.persistence.EntityManager;
-import javax.persistence.EntityManagerFactory;
 import javax.persistence.NoResultException;
-import javax.persistence.Persistence;
 import javax.persistence.Query;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.revolut.moneytransfers.model.Account;
 import com.revolut.moneytransfers.model.dao.AccountDao;
@@ -23,31 +26,33 @@ import com.revolut.moneytransfers.model.dao.AccountDao;
  * @see AccountDao
  * @since 1.0
  */
+@ApplicationScoped
 public class AccountDaoImpl implements AccountDao {
-	EntityManagerFactory emf = null;
+	@Inject
 	EntityManager em = null;
-
-	public AccountDaoImpl() {
-		emf = Persistence.createEntityManagerFactory("RevolutUnit1");
-		em = emf.createEntityManager();
-	}
+	/**
+	 * Self4j Logger
+	 */
+	@Inject
+	private transient  Logger logger;
 
 	@Override
-	public Account save(Account account) {
+	public Account save(Account account)throws Exception {
 		try {
 			em.getTransaction().begin();
 			em.persist(account);
 			em.getTransaction().commit();
+			logger.info(account.getAccountID().toString()+" persisted");
 		} catch (Exception e) {
-			e.printStackTrace();
+			logger.error(e.getMessage());
 		}
 		return account;
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public List<Account> selectByBeneficiaryPhone(String phone) {
-		System.out.println(phone + " Phone traversed 3 layers here !");
+	public List<Account> selectByBeneficiaryPhone(String phone) throws Exception {
+		logger.info(phone + " Phone traversed 3 layers here !");
 		Query query = em.createNamedQuery("Account.selectByBeneficiaryPhone");
 		query.setParameter("phone1", phone);
 		return query.getResultList();
@@ -55,13 +60,13 @@ public class AccountDaoImpl implements AccountDao {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public List<Account> selectAll() {
+	public List<Account> selectAll() throws Exception {
 		Query query = em.createNamedQuery("Account.selectAll");
 		return query.getResultList();
 	}
 
 	@Override
-	public Optional<Account> selectByBeneficiaryPhoneAndCurrency(String phone, String currency) {
+	public Optional<Account> selectByBeneficiaryPhoneAndCurrency(String phone, String currency) throws Exception {
 		Query query = em.createNamedQuery("Account.selectByBeneficiaryPhoneAndCurrency");
 		query.setParameter("phone1", phone);
 		query.setParameter("currency1", currency);
