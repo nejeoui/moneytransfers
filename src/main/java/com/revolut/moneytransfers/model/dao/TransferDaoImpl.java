@@ -58,8 +58,6 @@ public class TransferDaoImpl implements TransferDao {
 			
 			Transfer transfer=new Transfer(toBeDebited, toBeCredeited, amount, reference, comment, new Date().getTime(),exchangeRate);
 			em.persist(transfer);
-			em.getTransaction().commit();
-			em.getTransaction().begin();
 			em.merge(toBeCredeited);
 			em.merge(toBeDebited);
 			em.getTransaction().commit();
