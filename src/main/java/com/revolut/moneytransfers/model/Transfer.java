@@ -37,13 +37,14 @@ public class Transfer {
 	@Column(length = 3600)
 	private String comment;
 	private long time;
+	private double exchangeRate;
 	@Deprecated
 	public Transfer() {
 		super();
 	}
 
 	public Transfer(Account debitedAccount, Account creditedAccount, double amount, String reference, String comment,
-			long time) {
+			long time, double exchangeRate) {
 		super();
 		this.debitedAccount = debitedAccount;
 		this.creditedAccount = creditedAccount;
@@ -51,6 +52,7 @@ public class Transfer {
 		this.reference = reference;
 		this.comment = comment;
 		this.time = time;
+		this.exchangeRate=exchangeRate;
 	}
 
 }

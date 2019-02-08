@@ -2,7 +2,6 @@ package com.revolut.moneytransfers.model;
 
 import java.util.List;
 
-import javax.enterprise.context.ApplicationScoped;
 import javax.persistence.Column;
 import javax.persistence.Embedded;
 import javax.persistence.Entity;

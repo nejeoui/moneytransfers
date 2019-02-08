@@ -10,7 +10,6 @@ import javax.persistence.NoResultException;
 import javax.persistence.Query;
 
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.revolut.moneytransfers.model.Account;
 import com.revolut.moneytransfers.model.dao.AccountDao;
@@ -34,15 +33,15 @@ public class AccountDaoImpl implements AccountDao {
 	 * Self4j Logger
 	 */
 	@Inject
-	private transient  Logger logger;
+	private transient Logger logger;
 
 	@Override
-	public Account save(Account account)throws Exception {
+	public Account save(Account account) throws Exception {
 		try {
 			em.getTransaction().begin();
 			em.persist(account);
 			em.getTransaction().commit();
-			logger.info(account.getAccountID().toString()+" persisted");
+			logger.info(account.getAccountID().toString() + " persisted");
 		} catch (Exception e) {
 			logger.error(e.getMessage());
 		}
@@ -52,7 +51,6 @@ public class AccountDaoImpl implements AccountDao {
 	@SuppressWarnings("unchecked")
 	@Override
 	public List<Account> selectByBeneficiaryPhone(String phone) throws Exception {
-		logger.info(phone + " Phone traversed 3 layers here !");
 		Query query = em.createNamedQuery("Account.selectByBeneficiaryPhone");
 		query.setParameter("phone1", phone);
 		return query.getResultList();
@@ -75,6 +73,24 @@ public class AccountDaoImpl implements AccountDao {
 			account = (Account) query.getSingleResult();
 		} catch (NoResultException e) {
 			e.printStackTrace();
+		}
+		return Optional.ofNullable(account);
+	}
+
+	@Override
+	public Optional<Account> topUp(Account account) {
+		Account account_DB = null;
+		try {
+			em.getTransaction().begin();
+			account_DB = em.find(Account.class, account.getAccountID());
+			if (account_DB != null) {
+				account_DB.setBalance(account.getBalance());
+				em.merge(account);
+			}
+			em.getTransaction().commit();
+			logger.info(account.getAccountID().toString() + " persisted");
+		} catch (Exception e) {
+			logger.error(e.getMessage());
 		}
 		return Optional.ofNullable(account);
 	}

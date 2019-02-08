@@ -5,7 +5,6 @@ import javax.inject.Inject;
 import javax.persistence.EntityManager;
 
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.revolut.moneytransfers.model.Beneficiary;
 /**

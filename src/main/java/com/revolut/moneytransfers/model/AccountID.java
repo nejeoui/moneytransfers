@@ -24,6 +24,7 @@ public class AccountID implements Serializable {
 		super();
 		this.currency = currency;
 	}
+	
 
 	@Override
 	public boolean equals(Object obj) {
@@ -36,6 +37,12 @@ public class AccountID implements Serializable {
 	@Override
 	public int hashCode() {
 		return new StringBuilder(phone).append(currency).toString().hashCode();
+	}
+
+	public AccountID(String phone, String currency) {
+		super();
+		this.phone = phone;
+		this.currency = currency;
 	}
 
 }

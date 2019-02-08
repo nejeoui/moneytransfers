@@ -54,13 +54,6 @@ public class Account {
 	private String iban;
 	private String bic;
 	private double balance;
-	@OneToMany(mappedBy = "creditedAccount")
-	private List<Transfer> credits;
-
-	@OneToMany(mappedBy = "debitedAccount")
-	private List<Transfer> debits;
-
-	
 	
 	public Account() {
 		super();
@@ -92,5 +85,9 @@ public class Account {
 	@Override
 	public int hashCode() {
 		return this.accountID.hashCode();
+	}
+
+	public void topUp(double amount) {
+		if(amount>0) this.balance=this.balance+amount;
 	}
 }

@@ -5,8 +5,8 @@ import java.util.Optional;
 
 import javax.ws.rs.Produces;
 
+import com.revolut.moneytransfers.dao.AccountDaoImpl;
 import com.revolut.moneytransfers.model.Account;
-import com.revolut.moneytransfers.model.Beneficiary;
 
 /**
  * An {@code Interface} to handle CRUDE for the {@code Account} {@code Entity}
@@ -60,5 +60,7 @@ public interface AccountDao {
 	 * @throws Exception
 	 */
 	Optional<Account> selectByBeneficiaryPhoneAndCurrency(String phone, String currency) throws Exception;
+
+	Optional<Account> topUp(Account account);
 
 }
