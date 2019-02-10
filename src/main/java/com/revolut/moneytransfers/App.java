@@ -134,8 +134,11 @@ public class App {
 
 	public static JdbcDataSource getJdbcDataSource() {
 		JdbcDataSource dataSource = new JdbcDataSource();
+		// switch to file database
+//		dataSource.setURL("jdbc:h2:./target/revolut.db");
+		
 		// switch to memory database
-		dataSource.setURL("jdbc:h2:./target/revolut.db");
+		dataSource.setURL("jdbc:h2:mem:revolut");
 		dataSource.setUser(TransactionalProvider.USER);
 		dataSource.setPassword(TransactionalProvider.PASSWORD);
 
