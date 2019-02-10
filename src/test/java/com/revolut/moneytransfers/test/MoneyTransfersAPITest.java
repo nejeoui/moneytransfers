@@ -30,6 +30,7 @@ import com.revolut.moneytransfers.model.Beneficiary;
 import com.revolut.moneytransfers.service.AccountService;
 import com.revolut.moneytransfers.service.TransferService;
 import com.revolut.moneytransfers.service.rest.AccountRest;
+import com.revolut.moneytransfers.service.rest.BeneficiaryRest;
 import com.revolut.moneytransfers.service.rest.TopUpParams;
 import com.revolut.moneytransfers.service.rest.TransferDTO;
 import com.revolut.moneytransfers.service.rest.TransferRest;
@@ -38,12 +39,14 @@ import com.revolut.moneytransfers.service.rest.TransferRest;
  * Junit4 test class
  * <p>
  * This implementation use a custom {@code BlockJUnit4ClassRunner} to initialize
- * the CDI Context {@codeSeContainer}
+ * the CDI Context {@codeSeContainer} and the {@code JerseyTest} Framework for Testing JaxRS 
  * <p>
  * 
  * @author <a href="mailto:a.nejeoui@gmail.com">Abderrazzak Nejeoui</a>
  * @see InjectionRunner
  * @see SeContainer
+ * @see JerseyTest
+ * @see InjectionRunner
  * @since 1.0
  */
 @RunWith(InjectionRunner.class)
@@ -72,7 +75,67 @@ public class MoneyTransfersAPITest extends JerseyTest {
 	protected Application configure() {
 		Weld weld = new Weld();
 		weld.initialize();
-		return new ResourceConfig(AccountRest.class, TransferRest.class);
+		return new ResourceConfig(AccountRest.class, TransferRest.class,BeneficiaryRest.class);
+	}
+	private Response createNewBeneficiary(Beneficiary beneficiary) {
+		return target("Beneficiary/newBeneficiary").request().put(Entity.json(beneficiary));
+	}
+	private Response createNewAccount(Account account) {
+		return target("Account/newAccount").request().put(Entity.json(account));
+	}
+
+	private Account getAccountByPhoneCurrency(AccountID accountID) {
+		return target("Account/id").request().post(Entity.json(accountID)).readEntity(Account.class);
+	}
+
+	private List<Account> getAllAccounts() {
+		return target("Account/AllAccounts/").request().get().readEntity(ListAccountsGeneriqType);
+	}
+
+	private List<Account> getAllAccounts(String phone) {
+		return target("Account/" + phone).request().get().readEntity(ListAccountsGeneriqType);
+	}
+	private Response getBeneficiaryByPone(String phone) {
+		return target("Beneficiary/"+phone).request().get();
+	}
+/**
+ * Create a new Beneficiary Test
+ */
+	@Test
+	public void addNewBeneficiary() {
+		Beneficiary beneficiary = new Beneficiary();
+		String phone = "9999999999";
+		String firstName = "Lara";
+		String lastName = "Craft";
+		beneficiary.setPhone(phone);
+		beneficiary.setFirstName(firstName);
+		beneficiary.setLastName(lastName);
+		try {
+			Response createBenificiaryResponse=createNewBeneficiary(beneficiary);
+			assertEquals(createBenificiaryResponse.getStatus(), Status.CREATED.getStatusCode());
+		} catch (Exception e) {
+			logger.error(e.getMessage());
+		}
+	}
+	
+	@Test
+	public void findBeneficiary() {
+		Beneficiary beneficiary = new Beneficiary();
+		String phone = "333333999999";
+		String firstName = "Albert";
+		String lastName = "Einstein";
+		beneficiary.setPhone(phone);
+		beneficiary.setFirstName(firstName);
+		beneficiary.setLastName(lastName);
+		try {
+			Response createBenificiaryResponse=createNewBeneficiary(beneficiary);
+			assertEquals(createBenificiaryResponse.getStatus(), Status.CREATED.getStatusCode());
+			Response findBeneficiaryResponse=getBeneficiaryByPone(phone);
+			assertEquals(findBeneficiaryResponse.getStatus(), Status.OK.getStatusCode());
+			assertEquals(findBeneficiaryResponse.readEntity(Beneficiary.class), beneficiary);
+		} catch (Exception e) {
+			logger.error(e.getMessage());
+		}
 	}
 
 	@Test
@@ -92,14 +155,6 @@ public class MoneyTransfersAPITest extends JerseyTest {
 		String bic1 = "BIC Test 789 012";
 
 		Account account1 = new Account(beneficiary1, currency1, country1, label1, iban1, bic1);
-
-		// Account 2 same Beneficiary as Account1
-
-		String currency2 = "EUR";
-		String country2 = "France";
-		String label2 = "EUR France";
-		String iban2 = "IBAN Test 222 42256";
-		String bic2 = "BIC Test 222 03312";
 
 		try {
 			Response createAccountResponse=createNewAccount(account1);
@@ -148,34 +203,6 @@ public class MoneyTransfersAPITest extends JerseyTest {
 			logger.error(e.getMessage());
 			fail(e.getMessage());
 		}
-
-	}
-
-private Response createNewAccount(Account account) {
-return	target("Account/newAccount").request().put(Entity.json(account));
-	}
-
-private Account getAccountByPhoneCurrency(AccountID accountID) {
-		return target("Account/id").request().post(Entity.json(accountID)).readEntity(Account.class);
-	}
-
-private List<Account> getAllAccounts() {
-	return target("Account/AllAccounts/" ).request().get().readEntity(ListAccountsGeneriqType);
-	}
-
-private List<Account> getAllAccounts(String phone) {
-	return target("Account/" + phone).request().get().readEntity(ListAccountsGeneriqType);
-	}
-
-//	@Test
-	public void transfer() {
-		fail("Not implemented");
-
-	}
-
-//	@Test
-	public void topUpAccount() {
-		fail("Not implemented");
 
 	}
 

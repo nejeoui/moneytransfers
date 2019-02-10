@@ -5,7 +5,6 @@ import java.util.Optional;
 
 import javax.ws.rs.Produces;
 
-import com.revolut.moneytransfers.dao.AccountDaoImpl;
 import com.revolut.moneytransfers.model.Account;
 
 /**

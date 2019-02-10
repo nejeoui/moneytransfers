@@ -1,5 +1,7 @@
 package com.revolut.moneytransfers.model.dao;
 
+import java.util.Optional;
+
 import com.revolut.moneytransfers.model.Beneficiary;
 
 /**
@@ -21,8 +23,18 @@ public interface BeneficiaryDao {
 	 * Only beneficiaries with the unique phone are allowed.
 	 *
 	 * @param beneficiary Beneficiary.
-	 * @return The persisted account .
+	 * @return The persisted beneficiary .
 	 * @throws Exception
 	 */
 	Beneficiary save(Beneficiary beneficiary) throws Exception;
+	
+	/**
+	 * find the beneficiary  having the provided phone number.
+	 *
+	 *
+	 * @param phone String.
+	 * @return The beneficiary wraped in an {@code Optional<Beneficiary>} if exists, Otherwise returns Optional<null> .
+	 * @throws Exception
+	 */
+	Optional<Beneficiary> find(String phone) throws Exception;
 }

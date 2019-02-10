@@ -23,6 +23,9 @@ import com.revolut.moneytransfers.service.AccountService;
 
 @Path("/Account")
 public class AccountRest {
+	/**
+	 * AccountService offering CRUD 
+	 */
 	@Inject
 	private AccountService accountService;
 

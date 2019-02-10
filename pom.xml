@@ -18,6 +18,13 @@
 		<java.version>1.8</java.version>
 		<javaee-api.version>8.0</javaee-api.version>
 	</properties>
+	<repositories>
+	<repository>
+	<name>Jboss Releases</name>
+	<id>Jboss</id>
+	<url>https://repository.jboss.org/nexus/content/repositories/releases/</url>
+	</repository>
+	</repositories>
 	<build>
 		<plugins>
 			<plugin>

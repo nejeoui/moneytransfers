@@ -1,4 +1,4 @@
-package com.revolut.moneytransfers.dao;
+package com.revolut.moneytransfers.model.dao;
 
 import java.util.Collections;
 import java.util.List;
@@ -16,7 +16,6 @@ import org.slf4j.Logger;
 import com.revolut.moneytransfers.model.Account;
 import com.revolut.moneytransfers.model.AccountID;
 import com.revolut.moneytransfers.model.Beneficiary;
-import com.revolut.moneytransfers.model.dao.AccountDao;
 
 /**
  * An implementation of {@code AccountDao} {@code Interface} to handle CRUDE for

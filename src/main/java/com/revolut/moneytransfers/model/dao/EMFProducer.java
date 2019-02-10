@@ -1,4 +1,4 @@
-package com.revolut.moneytransfers.dao;
+package com.revolut.moneytransfers.model.dao;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Disposes;

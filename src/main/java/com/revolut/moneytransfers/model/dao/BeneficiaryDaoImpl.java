@@ -1,5 +1,7 @@
 package com.revolut.moneytransfers.model.dao;
 
+import java.util.Optional;
+
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
@@ -31,7 +33,7 @@ public class BeneficiaryDaoImpl implements BeneficiaryDao {
 	EntityManager em = null;
 
 	@Override
-	public Beneficiary save(Beneficiary beneficiary) {
+	public Beneficiary save(Beneficiary beneficiary) throws Exception {
 		try {
 			em.getTransaction().begin();
 			em.persist(beneficiary);
@@ -40,6 +42,22 @@ public class BeneficiaryDaoImpl implements BeneficiaryDao {
 			logger.error(e.getMessage());
 		}
 		return beneficiary;
+	}
+
+	@Override
+	public Optional<Beneficiary> find(String phone) throws Exception {
+		Beneficiary beneficiary=null;
+		try{
+			if(!em.getTransaction().isActive())
+				em.getTransaction().begin();
+		 beneficiary=	em.find(Beneficiary.class, phone);
+		 if(em.getTransaction().isActive())
+		 em.getTransaction().commit();
+		}catch (Exception e) {
+			em.getTransaction().rollback();
+			logger.error(e.getMessage());
+		}
+		return Optional.ofNullable(beneficiary);
 	}
 
 }
