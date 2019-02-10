@@ -43,20 +43,21 @@ public class AccountDaoImpl implements AccountDao {
 	@Override
 	public Account save(Account account) throws Exception {
 		try {
-			System.out.println("phone hhhhh="+account.getAccountID().getPhone());
-			if(!em.getTransaction().isActive())
-			em.getTransaction().begin();
-			Beneficiary beneficiary=em.find(Beneficiary.class, account.getAccountID().getPhone());
-			if(null!=beneficiary)
-			{	beneficiary.add(account);
-			em.merge(beneficiary);}
-			else {
+			if (!em.getTransaction().isActive())
+				em.getTransaction().begin();
+			Beneficiary beneficiary = null;
+			if (account.getAccountID().getPhone() != null)
+				beneficiary = em.find(Beneficiary.class, account.getAccountID().getPhone());
+			if (null != beneficiary) {
+				beneficiary.add(account);
+				em.merge(beneficiary);
+			} else {
 				em.persist(account.getBeneficiary());
 				account.setBeneficiary(account.getBeneficiary());
 				em.persist(account);
 			}
-			if(em.getTransaction().isActive())
-			em.getTransaction().commit();
+			if (em.getTransaction().isActive())
+				em.getTransaction().commit();
 			logger.info(account.getAccountID().toString() + " persisted");
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -69,10 +70,10 @@ public class AccountDaoImpl implements AccountDao {
 	@Override
 	public List<Account> selectByBeneficiaryPhone(String phone) throws Exception {
 		try {
-			
+
 			Query query = em.createNamedQuery("Account.selectByBeneficiaryPhone");
 			query.setParameter("phone1", phone);
-			List<Account> accounts=query.getResultList();
+			List<Account> accounts = query.getResultList();
 			return accounts;
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -85,9 +86,9 @@ public class AccountDaoImpl implements AccountDao {
 	@Override
 	public List<Account> selectAll() throws Exception {
 		try {
-		Query query = em.createNamedQuery("Account.selectAll");
-		List<Account> accounts=query.getResultList();
-		return accounts;
+			Query query = em.createNamedQuery("Account.selectAll");
+			List<Account> accounts = query.getResultList();
+			return accounts;
 		} catch (Exception e) {
 			e.printStackTrace();
 			logger.info("selectAll fail " + e.getMessage());
@@ -122,7 +123,7 @@ public class AccountDaoImpl implements AccountDao {
 			em.getTransaction().commit();
 			logger.info(account.getAccountID().toString() + " persisted");
 		} catch (Exception e) {
-			logger.error("topUp"+e.getMessage());
+			logger.error("topUp" + e.getMessage());
 			em.getTransaction().rollback();
 		}
 		return Optional.ofNullable(account);
@@ -130,8 +131,8 @@ public class AccountDaoImpl implements AccountDao {
 
 	@Override
 	public boolean isPersistent(Account account) throws Exception {
-		if(account==null||account.getAccountID()==null)
-		return false;
-		return em.find(Account.class, account.getAccountID())!=null;
+		if (account == null || account.getAccountID() == null)
+			return false;
+		return em.find(Account.class, account.getAccountID()) != null;
 	}
 }

@@ -294,6 +294,8 @@ public class MoneyTransfersAPITest extends JerseyTest {
 		try {
 			// reteive all accounts
 			List<Account> accounts = getAllAccounts();
+			// for test purpose we will set phone for account1
+			account1.getAccountID().setPhone(phone);
 			assertTrue(accounts.contains(account1));
 
 			// retreive account1
@@ -323,6 +325,9 @@ public class MoneyTransfersAPITest extends JerseyTest {
 			Response createAccountResponse = createNewAccount(account3);
 			assertEquals(createAccountResponse.getStatus(), Status.CREATED.getStatusCode());
 			List<Account> accounts2 = getAllAccounts();
+			// for test purpose we will set phone for account1 and account3
+			account1.getAccountID().setPhone(phone);
+			account3.getAccountID().setPhone(phone2);
 			assertTrue(accounts2.containsAll(Arrays.asList(account1, account3)));
 			Account account_3 = getAccountByPhoneCurrency(account3.getAccountID());
 			assertEquals(account3, account_3);
@@ -375,7 +380,8 @@ public class MoneyTransfersAPITest extends JerseyTest {
 		try {
 			Response createAccount4Response = createNewAccount(account4);
 			assertEquals(createAccount4Response.getStatus(), Status.CREATED.getStatusCode());
-
+			// for test purpose we will manually set phone for account4
+			account4.getAccountID().setPhone(phone4);
 			Assert.assertTrue(getAllAccounts(phone4).contains(account4));
 		} catch (Exception e) {
 			logger.error(e.getMessage());
@@ -404,9 +410,9 @@ public class MoneyTransfersAPITest extends JerseyTest {
 		// invoke Account/newAccount endPoint to create a new Account from JSON
 		Response createAccountResponse = createNewAccount(account5);
 		assertEquals(createAccountResponse.getStatus(), Status.CREATED.getStatusCode());
-		Response response = target("Account/id").request().post(Entity.json(account5.getAccountID()));
+		Response response = target("Account/id").request().post(Entity.json(new AccountID(phone5,currency5)));
 		logger.info("response Entity : " + response);
-		Assert.assertEquals(response.readEntity(Account.class).getAccountID(), account5.getAccountID());
+		Assert.assertEquals(response.readEntity(Account.class).getAccountID(), new AccountID(phone5,currency5));
 
 	}
 
@@ -441,6 +447,8 @@ public class MoneyTransfersAPITest extends JerseyTest {
 
 		assertEquals(topUpResponse.getStatus(), Status.CREATED.getStatusCode());
 		// invoke Account/ endPoint to retrieve the modified sixth account
+		// for test purpose we will set phone for account6
+					account6.getAccountID().setPhone(phone6);
 		Response getAccountResponse = target("Account/id").request().post(Entity.json(account6.getAccountID()));
 		assertEquals(getAccountResponse.getStatus(), Status.OK.getStatusCode());
 		logger.info("getAccountsResponse response Message : " + getAccountResponse.getEntity().toString());
@@ -502,8 +510,8 @@ public class MoneyTransfersAPITest extends JerseyTest {
 			logger.info("Test instance TransferDTO : " + transferDTO.toString());
 			Response rsp = target("Transfers/transfer/").request().put(Entity.json(transferDTO));
 			logger.info("rsp ::: " + rsp.toString());
-			Account account_7 = getAccountByPhoneCurrency(account7.getAccountID());
-			Account account_8 = getAccountByPhoneCurrency(account8.getAccountID());
+			Account account_7 = getAccountByPhoneCurrency(new AccountID(phone7,currency7));
+			Account account_8 = getAccountByPhoneCurrency(new AccountID(phone8,currency8));
 			logger.info("account_7 = " + account_7);
 			logger.info("account_8 = " + account_8);
 			assertEquals(account_7.getBalance(), 67859.86 - 450.0, DELTA);

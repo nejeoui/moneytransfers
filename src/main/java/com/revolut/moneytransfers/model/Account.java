@@ -21,7 +21,7 @@ import lombok.Data;
  * A Revolut {@code Account}
  * <p>
  * Each {@code Account} is bound to a single currency and a unique
- * {@code Beneficiary}
+ * {@code Beneficiary} identified by phone
  * <p>
  * Each {@code Account} has a unique combination of (IBAN,BIC)
  *
@@ -38,19 +38,28 @@ import lombok.Data;
 /*
  * 
  * */
-@Table(uniqueConstraints = { @UniqueConstraint(columnNames = { "iban", "bic" }),@UniqueConstraint(columnNames = { "phone", "currency" }) })
+@Table(uniqueConstraints = { @UniqueConstraint(columnNames = { "iban", "bic" }),
+		@UniqueConstraint(columnNames = { "phone", "currency" }) })
 public class Account implements Serializable {
 	/**
 	 * serialVersionUID
 	 */
 	@Transient
 	private transient static final long serialVersionUID = 1L;
-	
+	/**
+	 * the account ID as embedded object which embed the beneficiary phone and
+	 * currency
+	 */
 	@EmbeddedId
 	private AccountID accountID;
 
 	/**
-	 * the account beneficiary.
+	 * the account beneficiary. the @MapsId annotation handle the phone property in
+	 * the embeddedId accountID.
+	 * <p>
+	 * the phone property is not set on the constructor
+	 * {@link com.revolut.moneytransfers.model.Account#Account(Beneficiary, String, String, String, String, String)}
+	 * line 78
 	 *
 	 */
 	@MapsId("phone")
@@ -72,7 +81,9 @@ public class Account implements Serializable {
 		super();
 		if (beneficiary == null || country == null || iban == null || bic == null)
 			throw new IllegalArgumentException("null values ");
-		AccountID accountID = new AccountID(beneficiary.getPhone(), currency);
+		// used just for testing purpose, @MapsID handle the phone property injection
+		// AccountID accountID = new AccountID(beneficiary.getPhone(), currency);
+		AccountID accountID = new AccountID(currency);
 		this.accountID = accountID;
 		this.beneficiary = beneficiary;
 		this.country = country;
@@ -105,8 +116,9 @@ public class Account implements Serializable {
 		if (amount > 0)
 			this.balance = this.balance + amount;
 	}
-	public void setBeneficiary(Beneficiary beneficiary) {
-		this.beneficiary=beneficiary;
-		this.getAccountID().setPhone(beneficiary.getPhone());
-	}
+	// used just for testing purpose, @MapsID handle the phone property injection
+//	public void setBeneficiary(Beneficiary beneficiary) {
+//		this.beneficiary=beneficiary;
+//		this.getAccountID().setPhone(beneficiary.getPhone());
+//	}
 }
