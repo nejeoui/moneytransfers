@@ -6,6 +6,7 @@ import java.util.Optional;
 import javax.ws.rs.Produces;
 
 import com.revolut.moneytransfers.model.Account;
+import com.revolut.moneytransfers.model.Beneficiary;
 
 /**
  * An {@code Interface} to handle CRUDE for the {@code Account} {@code Entity}
@@ -18,7 +19,7 @@ import com.revolut.moneytransfers.model.Account;
  * @see AccountDaoImpl
  * @since 1.0
  */
-@Produces()
+@Produces
 public interface AccountDao {
 	/**
 	 * Adds new Account to the database.
@@ -60,6 +61,20 @@ public interface AccountDao {
 	 */
 	Optional<Account> findAccountByID(String phone, String currency) throws Exception;
 
+	/**
+	 * Tops Up the account balance by adding the provided the new account balance
+	 * 
+	 * @param account Account with a new balance.
+	 * @throws Exception
+	 */
 	Optional<Account> topUp(Account account);
+
+	/**
+	 * 
+	 * @param account {@code Account}
+	 * @return true if the account exist in DB. Otherwise returns false;
+	 * @throws Exception
+	 */
+	public boolean isPersistent(Account account) throws Exception;
 
 }

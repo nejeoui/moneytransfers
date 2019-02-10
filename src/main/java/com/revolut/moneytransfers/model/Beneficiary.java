@@ -10,10 +10,15 @@ import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Embedded;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.NamedQuery;
 import javax.persistence.OneToMany;
+import javax.persistence.OneToOne;
+import javax.persistence.Transient;
 
 import lombok.Data;
 
@@ -30,11 +35,13 @@ import lombok.Data;
  */
 @Data
 @Entity
+@NamedQuery(name="Beneficiary.selectAll", query="select b from Beneficiary b")
 public class Beneficiary implements Serializable {
 	/**
 	 * serialVersionUID
 	 */
-	private static final long serialVersionUID = 1L;
+	@Transient
+	private transient static final long serialVersionUID = 1L;
 	
 	@Id
 	@Column(name="phone")
@@ -85,4 +92,5 @@ public class Beneficiary implements Serializable {
 	public int hashCode() {
 		return   this.phone != null ? this.phone.hashCode() : 0;
 	}
+	
 }

@@ -1,0 +1,6 @@
+<properties>
+    <!-- Recovery properties for TransactionalDriver. See com.arjuna.ats.internal.jdbc.recovery.JDBCXARecovery for more details -->
+    <entry key="DatabaseJNDIName">java:/RevolutJTADS</entry>
+    <entry key="UserName">sa</entry>
+    <entry key="Password">sa</entry>
+</properties>

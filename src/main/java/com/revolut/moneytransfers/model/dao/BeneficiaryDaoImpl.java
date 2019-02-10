@@ -1,13 +1,16 @@
 package com.revolut.moneytransfers.model.dao;
 
+import java.util.List;
 import java.util.Optional;
 
 import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.inject.Default;
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
 
 import org.slf4j.Logger;
 
+import com.revolut.moneytransfer.dao.jta.ResourceLocal;
 import com.revolut.moneytransfers.model.Beneficiary;
 /**
  * An implementation of {@code BeneficiaryDao} {@code Interface} to handle CRUDE for
@@ -30,6 +33,7 @@ public class BeneficiaryDaoImpl implements BeneficiaryDao {
 	private transient  Logger logger;
 	
 	@Inject
+	@ResourceLocal
 	EntityManager em = null;
 
 	@Override
@@ -58,6 +62,22 @@ public class BeneficiaryDaoImpl implements BeneficiaryDao {
 			logger.error(e.getMessage());
 		}
 		return Optional.ofNullable(beneficiary);
+	}
+
+	@Override
+	public List<Beneficiary> findAll() throws Exception {
+		return em.createNamedQuery("Beneficiary.selectAll", Beneficiary.class).getResultList();
+	}
+	@Override
+	public void emptyDb() throws Exception {
+        assert em != null;
+        findAll().forEach(em::remove);
+    }
+
+	@Override
+	public boolean isPersistent(Beneficiary beneficiary) throws Exception {
+		if(null==beneficiary) return false;
+		return em.find(Beneficiary.class, beneficiary.getPhone())!=null;
 	}
 
 }

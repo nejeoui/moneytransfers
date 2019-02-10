@@ -5,10 +5,10 @@ import java.sql.SQLException;
 import java.util.Properties;
 
 import javax.inject.Inject;
-
 import org.hibernate.engine.jdbc.connections.spi.ConnectionProvider;
 import org.hibernate.service.UnknownUnwrapTypeException;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.arjuna.ats.jdbc.TransactionalDriver;
 
@@ -29,8 +29,8 @@ public class TransactionalProvider implements ConnectionProvider {
 	/**
 	 * Self4j Logger
 	 */
-	@Inject
-	private transient Logger logger;
+	
+	private transient Logger logger=LoggerFactory.getLogger(TransactionalProvider.class);
 
 	public static final String DS_JNDI_NAME = "java:/RevolutJTADS";
 

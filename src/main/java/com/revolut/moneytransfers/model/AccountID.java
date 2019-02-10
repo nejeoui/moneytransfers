@@ -3,6 +3,7 @@ package com.revolut.moneytransfers.model;
 import java.io.Serializable;
 
 import javax.persistence.Embeddable;
+import javax.persistence.Transient;
 
 import lombok.Data;
 
@@ -13,7 +14,8 @@ public class AccountID implements Serializable {
 	/**
 	 * serialVersionUID
 	 */
-	private static final long serialVersionUID = 1L;
+	@Transient
+	private transient static final long serialVersionUID = 1L;
 	private String phone;
 	private String currency;
 

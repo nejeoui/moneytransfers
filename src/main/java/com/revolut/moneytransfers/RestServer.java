@@ -19,9 +19,11 @@ public class RestServer {
 
 	public static void main(String args[]) {
 		try {
+			//initialize CDI Context
 			Weld weld = new Weld();
 			weld.initialize();
-
+			
+			//start Jersey Server
 			ResourceConfig resourceConfig = new ResourceConfig();
 			resourceConfig.register(AccountRest.class);
 			resourceConfig.register(HelloRest.class);

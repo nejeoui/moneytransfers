@@ -1,9 +1,17 @@
 package com.revolut.moneytransfers.model;
 
+import java.io.Serializable;
+
 import javax.persistence.Embeddable;
+import javax.persistence.Transient;
 
 @Embeddable
-public class Address {
+public class Address implements Serializable {
+	/**
+	 * serialVersionUID
+	 */
+	@Transient
+	private transient static final long serialVersionUID = 1L;
 	private String street;
 	private String city;
 	private String state;

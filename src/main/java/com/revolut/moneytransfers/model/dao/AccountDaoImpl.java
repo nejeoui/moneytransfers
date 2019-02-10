@@ -13,6 +13,7 @@ import javax.persistence.Query;
 
 import org.slf4j.Logger;
 
+import com.revolut.moneytransfer.dao.jta.ResourceLocal;
 import com.revolut.moneytransfers.model.Account;
 import com.revolut.moneytransfers.model.AccountID;
 import com.revolut.moneytransfers.model.Beneficiary;
@@ -31,6 +32,7 @@ import com.revolut.moneytransfers.model.Beneficiary;
 @ApplicationScoped
 public class AccountDaoImpl implements AccountDao {
 	@Inject
+	@ResourceLocal
 	EntityManager em = null;
 	/**
 	 * Self4j Logger
@@ -124,5 +126,12 @@ public class AccountDaoImpl implements AccountDao {
 			em.getTransaction().rollback();
 		}
 		return Optional.ofNullable(account);
+	}
+
+	@Override
+	public boolean isPersistent(Account account) throws Exception {
+		if(account==null||account.getAccountID()==null)
+		return false;
+		return em.find(Account.class, account.getAccountID())!=null;
 	}
 }

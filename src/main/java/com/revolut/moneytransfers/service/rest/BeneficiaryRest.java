@@ -2,6 +2,7 @@ package com.revolut.moneytransfers.service.rest;
 
 import java.util.Optional;
 
+import javax.enterprise.inject.Alternative;
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -17,6 +18,7 @@ import org.slf4j.Logger;
 
 import com.revolut.moneytransfers.model.Beneficiary;
 import com.revolut.moneytransfers.service.BeneficiaryService;
+import com.revolut.moneytransfers.service.BeneficiaryServiceImpl;
 
 @Path("/Beneficiary")
 public class BeneficiaryRest {

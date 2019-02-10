@@ -1,5 +1,7 @@
 package com.revolut.moneytransfers.model;
 
+import java.io.Serializable;
+
 import javax.persistence.CascadeType;
 import javax.persistence.EmbeddedId;
 import javax.persistence.Entity;
@@ -8,7 +10,9 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.MapsId;
 import javax.persistence.NamedQuery;
+import javax.persistence.OneToOne;
 import javax.persistence.Table;
+import javax.persistence.Transient;
 import javax.persistence.UniqueConstraint;
 
 import lombok.Data;
@@ -35,7 +39,13 @@ import lombok.Data;
  * 
  * */
 @Table(uniqueConstraints = { @UniqueConstraint(columnNames = { "iban", "bic" }),@UniqueConstraint(columnNames = { "phone", "currency" }) })
-public class Account {
+public class Account implements Serializable {
+	/**
+	 * serialVersionUID
+	 */
+	@Transient
+	private transient static final long serialVersionUID = 1L;
+	
 	@EmbeddedId
 	private AccountID accountID;
 

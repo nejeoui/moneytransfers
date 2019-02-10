@@ -7,7 +7,11 @@ import java.util.List;
 
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
+import javax.ws.rs.ext.RuntimeDelegate;
 
+import org.glassfish.grizzly.http.server.HttpHandler;
+import org.glassfish.grizzly.http.server.HttpServer;
+import org.glassfish.jersey.server.ResourceConfig;
 import org.h2.jdbcx.JdbcDataSource;
 import org.jboss.weld.environment.se.Weld;
 import org.jnp.server.NamingBeanImpl;
@@ -26,6 +30,10 @@ import com.revolut.moneytransfer.dao.jta.JtaPropertyManager;
 import com.revolut.moneytransfer.dao.jta.RecoveryPropertyManager;
 import com.revolut.moneytransfer.dao.jta.RevolutXAResourceRecoveryHelper;
 import com.revolut.moneytransfer.dao.jta.TransactionalProvider;
+import com.revolut.moneytransfers.service.rest.AccountRest;
+import com.revolut.moneytransfers.service.rest.BeneficiaryRest;
+import com.revolut.moneytransfers.service.rest.HelloRest;
+import com.revolut.moneytransfers.service.rest.TransferRest;
 
 public class App {
 	/**
@@ -36,13 +44,20 @@ public class App {
 	 * JBoss CDI 2.0 Container
 	 */
 	private static final Weld weld = new Weld();
+
+	/**
+	 * Jersey Server supporting
+	 * <a href="https://jcp.org/en/jsr/detail?id=370">JAX-RS 2.1 (JSR 370) </a>
+	 */
+	private static final HttpServer server = HttpServer.createSimpleServer(null, 8080);
+
 	/**
 	 * JNDI server.
 	 */
 	private static final NamingBeanImpl JNDI_NAMING_SERVER = new NamingBeanImpl();
 
 	/**
-	 * Bootstrap the CDI Container, JNDI Server and JTA Manager
+	 * Bootstrap the CDI Container, JAX-RS Server, JNDI Server and JTA Manager
 	 */
 	public static void init() throws Exception {
 		/**
@@ -50,6 +65,24 @@ public class App {
 		 */
 		weld.initialize();
 
+		// start Jersey Server
+		ResourceConfig resourceConfig = new ResourceConfig();
+		resourceConfig.register(AccountRest.class);
+		resourceConfig.register(HelloRest.class);
+		resourceConfig.register(TransferRest.class);
+		resourceConfig.register(BeneficiaryRest.class);
+		HttpHandler handler = RuntimeDelegate.getInstance().createEndpoint(resourceConfig, HttpHandler.class);
+		server.getServerConfiguration().addHttpHandler(handler);
+		new Thread(() -> {
+			try {
+				logger.info("Starting...!");
+				server.start();
+				logger.info("http Server started!");
+				System.in.read();
+			} catch (Exception ex) {
+				ex.printStackTrace();
+			}
+		}).start();
 		/**
 		 * Start JNDI Naming Server
 		 */
@@ -58,20 +91,25 @@ public class App {
 		} catch (Throwable t) {
 			logger.error(t.getMessage());
 		}
-		// Bind JTA implementation with default names
+		/**
+		 * Bind JTA implementation with default names
+		 */
 		try {
 			JNDIManager.bindJTAImplementation();
 		} catch (NamingException e) {
 			logger.error(e.getMessage());
 		}
-
-		// Bind datasource
+		/**
+		 * Bind datasource
+		 */
 		try {
 			new InitialContext().bind(TransactionalProvider.DS_JNDI_NAME, getJdbcDataSource());
 		} catch (NamingException e) {
 			logger.error(e.getMessage());
 		}
-
+		/**
+		 * Configure recovery Environment
+		 */
 		// Set required recovery modules
 		RecoveryPropertyManager.getRecoveryEnvironmentBean().setRecoveryModuleClassNames(getRecoveryModuleClassNames());
 		// Set recovery manager to scan every 2 seconds
@@ -94,7 +132,7 @@ public class App {
 
 	}
 
-	private static JdbcDataSource getJdbcDataSource() {
+	public static JdbcDataSource getJdbcDataSource() {
 		JdbcDataSource dataSource = new JdbcDataSource();
 		// switch to memory database
 		dataSource.setURL("jdbc:h2:./target/revolut.db");
@@ -104,7 +142,7 @@ public class App {
 		return dataSource;
 	}
 
-	static void setObjectStoreFolder() {
+	public static void setObjectStoreFolder() {
 		BeanPopulator.getDefaultInstance(ObjectStoreEnvironmentBean.class)
 				.setObjectStoreDir("target/xaTransactionFolder");
 		BeanPopulator.getNamedInstance(ObjectStoreEnvironmentBean.class, "communicationStore")
@@ -113,21 +151,20 @@ public class App {
 				.setObjectStoreDir("target/xaTransactionFolder");
 	}
 
-	private static List<XAResourceRecovery> getXaResourceRecoveries() throws SQLException {
+	public static List<XAResourceRecovery> getXaResourceRecoveries() throws SQLException {
 		XAResourceRecovery jdbcXaRecovery = new JDBCXARecovery();
-		jdbcXaRecovery.initialise("jdbc-recovery.xml");
+		jdbcXaRecovery.initialise("database-recovery.xml");
 
 		return Collections.singletonList(jdbcXaRecovery);
 	}
 
-	static List<String> getRecoveryModuleClassNames() {
+	public static List<String> getRecoveryModuleClassNames() {
 		List<String> recoveryModuleClassNames = new ArrayList<>();
 		recoveryModuleClassNames.add(AtomicActionRecoveryModule.class.getName());
 		recoveryModuleClassNames.add(XARecoveryModule.class.getName());
 
 		return recoveryModuleClassNames;
 	}
-	
 
 	static void shutdown() {
 		try {

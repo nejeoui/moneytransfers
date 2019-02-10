@@ -10,6 +10,7 @@ import javax.persistence.LockModeType;
 
 import org.slf4j.Logger;
 
+import com.revolut.moneytransfer.dao.jta.ResourceLocal;
 import com.revolut.moneytransfers.exception.IllegalRevolutTransactionException;
 import com.revolut.moneytransfers.model.Account;
 import com.revolut.moneytransfers.model.AccountID;
@@ -28,6 +29,7 @@ import com.revolut.moneytransfers.model.Transfer;
  */
 public class TransferDaoImpl implements TransferDao {
 	@Inject
+	@ResourceLocal
 	EntityManager em = null;
 	/**
 	 * Self4j Logger
@@ -70,6 +72,13 @@ public class TransferDaoImpl implements TransferDao {
 			return 0;
 		}
 		return 1;
+	}
+
+	@Override
+	public boolean isPersistent(Transfer transfer) throws Exception {
+		if(transfer==null)
+		return false;
+		return transfer.getId()!=0;
 	}
 
 }

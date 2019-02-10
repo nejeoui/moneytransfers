@@ -5,25 +5,41 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.List;
 
 import javax.enterprise.inject.se.SeContainer;
 import javax.inject.Inject;
+import javax.naming.InitialContext;
+import javax.naming.NamingException;
+import javax.transaction.TransactionManager;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Application;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
+import org.glassfish.grizzly.http.server.HttpServer;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.test.JerseyTest;
 import org.jboss.weld.environment.se.Weld;
+import org.jnp.server.NamingBeanImpl;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import com.arjuna.ats.arjuna.recovery.RecoveryManager;
+import com.arjuna.ats.internal.jta.recovery.arjunacore.XARecoveryModule;
+import com.arjuna.ats.jta.utils.JNDIManager;
+import com.revolut.moneytransfer.dao.jta.BeneficiaryDaoJTAImpl;
+import com.revolut.moneytransfer.dao.jta.JtaPropertyManager;
+import com.revolut.moneytransfer.dao.jta.RecoveryPropertyManager;
+import com.revolut.moneytransfer.dao.jta.RevolutXAResourceRecoveryHelper;
+import com.revolut.moneytransfer.dao.jta.TransactionalProvider;
+import com.revolut.moneytransfers.App;
 import com.revolut.moneytransfers.model.Account;
 import com.revolut.moneytransfers.model.AccountID;
 import com.revolut.moneytransfers.model.Beneficiary;
@@ -39,7 +55,8 @@ import com.revolut.moneytransfers.service.rest.TransferRest;
  * Junit4 test class
  * <p>
  * This implementation use a custom {@code BlockJUnit4ClassRunner} to initialize
- * the CDI Context {@codeSeContainer} and the {@code JerseyTest} Framework for Testing JaxRS 
+ * the CDI Context {@codeSeContainer} and the {@code JerseyTest} Framework for
+ * Testing JaxRS
  * <p>
  * 
  * @author <a href="mailto:a.nejeoui@gmail.com">Abderrazzak Nejeoui</a>
@@ -57,29 +74,112 @@ public class MoneyTransfersAPITest extends JerseyTest {
 	private static final double DELTA = 1e-15;
 
 	private static final GenericType<List<Account>> ListAccountsGeneriqType = new GenericType<List<Account>>() {
-			};
+	};
 
 	/**
 	 * AccountService instance for the sake of CDI Test
 	 */
 	@Inject
 	AccountService accountService;
+	/**
+	 * BeneficiaryDaoJTAImpl instance for Testing JTA
+	 */
+	@Inject
+	BeneficiaryDaoJTAImpl beneficiaryDaoJTAImpl;
 
 	/**
 	 * Self4j Logger
 	 */
-	@Inject
-	private transient Logger logger;
+	private static transient Logger logger = LoggerFactory.getLogger(App.class);
+	/**
+	 * JBoss CDI 2.0 Container
+	 */
+	private static Weld weld;
+
+	/**
+	 * Jersey Server supporting
+	 * <a href="https://jcp.org/en/jsr/detail?id=370">JAX-RS 2.1 (JSR 370) </a>
+	 */
+	private static final HttpServer server = HttpServer.createSimpleServer(null, 8080);
+
+	/**
+	 * JNDI server.
+	 */
+	private static final NamingBeanImpl JNDI_NAMING_SERVER = new NamingBeanImpl();
+
+	/**
+	 * TransactionManager
+	 */
+	private static TransactionManager transactionManager;
 
 	@Override
 	protected Application configure() {
-		Weld weld = new Weld();
+		weld = new Weld();
 		weld.initialize();
-		return new ResourceConfig(AccountRest.class, TransferRest.class,BeneficiaryRest.class);
+		/**
+		 * Start JNDI Naming Server
+		 */
+		try {
+			JNDI_NAMING_SERVER.start();
+		} catch (Throwable t) {
+			logger.error(t.getMessage());
+		}
+		/**
+		 * Bind JTA implementation with default names
+		 */
+		try {
+			JNDIManager.bindJTAImplementation();
+		} catch (NamingException e) {
+			logger.error(e.getMessage());
+		}
+		/**
+		 * Bind datasource
+		 */
+		try {
+			new InitialContext().bind(TransactionalProvider.DS_JNDI_NAME, App.getJdbcDataSource());
+		} catch (NamingException e) {
+			logger.error(e.getMessage());
+		}
+		/**
+		 * Configure recovery Environment
+		 */
+		// Set required recovery modules
+		RecoveryPropertyManager.getRecoveryEnvironmentBean()
+				.setRecoveryModuleClassNames(App.getRecoveryModuleClassNames());
+		// Set recovery manager to scan every 2 seconds
+		RecoveryPropertyManager.getRecoveryEnvironmentBean().setPeriodicRecoveryPeriod(2);
+		// Set recovery backoff between scan phases to 1 second
+		RecoveryPropertyManager.getRecoveryEnvironmentBean().setRecoveryBackoffPeriod(1);
+		// Set XA resource recoveries required for JDBC recovery
+		try {
+			JtaPropertyManager.getJTAEnvironmentBean().setXaResourceRecoveries(App.getXaResourceRecoveries());
+		} catch (SQLException e) {
+			logger.error(e.getMessage());
+			e.printStackTrace();
+		}
+		// Set transaction log location
+		App.setObjectStoreFolder();
+		// Delay recovery manager start until recovery demonstration
+		RecoveryManager.delayRecoveryManagerThread();
+		// Set recovery helper required to recover dummy XA resource
+		RecoveryManager.manager().getModules().stream().filter(m -> m instanceof XARecoveryModule).forEach(
+				m -> ((XARecoveryModule) m).addXAResourceRecoveryHelper(new RevolutXAResourceRecoveryHelper()));
+
+		try {
+			transactionManager = InitialContext.doLookup("java:/TransactionManager");
+		} catch (NamingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		return new ResourceConfig(AccountRest.class, TransferRest.class, BeneficiaryRest.class);
 	}
+
 	private Response createNewBeneficiary(Beneficiary beneficiary) {
+		logger.info("Generated json " + Entity.json(beneficiary));
 		return target("Beneficiary/newBeneficiary").request().put(Entity.json(beneficiary));
 	}
+
 	private Response createNewAccount(Account account) {
 		return target("Account/newAccount").request().put(Entity.json(account));
 	}
@@ -95,12 +195,40 @@ public class MoneyTransfersAPITest extends JerseyTest {
 	private List<Account> getAllAccounts(String phone) {
 		return target("Account/" + phone).request().get().readEntity(ListAccountsGeneriqType);
 	}
+
 	private Response getBeneficiaryByPone(String phone) {
-		return target("Beneficiary/"+phone).request().get();
+		return target("Beneficiary/" + phone).request().get();
 	}
-/**
- * Create a new Beneficiary Test
- */
+
+	/**
+	 * Create a new Beneficiary Using JTA API
+	 */
+	@Test
+	public void addNewBeneficiaryJTA() {
+		logger.error(" addNewBeneficiaryJTA starting");
+		Beneficiary beneficiary = new Beneficiary();
+		String phone = "760978097809";
+		String firstName = "James";
+		String lastName = "Gosling";
+		beneficiary.setPhone(phone);
+		beneficiary.setFirstName(firstName);
+		beneficiary.setLastName(lastName);
+		try {
+			transactionManager.begin();
+			beneficiaryDaoJTAImpl.save(beneficiary);
+			transactionManager.commit();
+			Beneficiary fromDB = beneficiaryDaoJTAImpl.find(phone).get();
+			logger.info("Retrieved from DB using JTA "+fromDB);
+			assertNotNull(fromDB);
+		} catch (Exception e) {
+			logger.error(e.getMessage());
+			fail(e.getMessage());
+		}
+	}
+
+	/**
+	 * Create a new Beneficiary Test
+	 */
 	@Test
 	public void addNewBeneficiary() {
 		Beneficiary beneficiary = new Beneficiary();
@@ -111,13 +239,13 @@ public class MoneyTransfersAPITest extends JerseyTest {
 		beneficiary.setFirstName(firstName);
 		beneficiary.setLastName(lastName);
 		try {
-			Response createBenificiaryResponse=createNewBeneficiary(beneficiary);
+			Response createBenificiaryResponse = createNewBeneficiary(beneficiary);
 			assertEquals(createBenificiaryResponse.getStatus(), Status.CREATED.getStatusCode());
 		} catch (Exception e) {
 			logger.error(e.getMessage());
 		}
 	}
-	
+
 	@Test
 	public void findBeneficiary() {
 		Beneficiary beneficiary = new Beneficiary();
@@ -128,9 +256,9 @@ public class MoneyTransfersAPITest extends JerseyTest {
 		beneficiary.setFirstName(firstName);
 		beneficiary.setLastName(lastName);
 		try {
-			Response createBenificiaryResponse=createNewBeneficiary(beneficiary);
+			Response createBenificiaryResponse = createNewBeneficiary(beneficiary);
 			assertEquals(createBenificiaryResponse.getStatus(), Status.CREATED.getStatusCode());
-			Response findBeneficiaryResponse=getBeneficiaryByPone(phone);
+			Response findBeneficiaryResponse = getBeneficiaryByPone(phone);
 			assertEquals(findBeneficiaryResponse.getStatus(), Status.OK.getStatusCode());
 			assertEquals(findBeneficiaryResponse.readEntity(Beneficiary.class), beneficiary);
 		} catch (Exception e) {
@@ -157,18 +285,18 @@ public class MoneyTransfersAPITest extends JerseyTest {
 		Account account1 = new Account(beneficiary1, currency1, country1, label1, iban1, bic1);
 
 		try {
-			Response createAccountResponse=createNewAccount(account1);
+			Response createAccountResponse = createNewAccount(account1);
 			assertEquals(createAccountResponse.getStatus(), Status.CREATED.getStatusCode());
 		} catch (Exception e) {
 			logger.error(e.getMessage());
 		}
 
 		try {
-			// reteive all accounts 
+			// reteive all accounts
 			List<Account> accounts = getAllAccounts();
 			assertTrue(accounts.contains(account1));
 
-			// retreive account1 
+			// retreive account1
 			Account account_1 = getAccountByPhoneCurrency(account1.getAccountID());
 
 			assertEquals(account1, account_1);
@@ -192,10 +320,10 @@ public class MoneyTransfersAPITest extends JerseyTest {
 		Account account3 = new Account(beneficiary2, currency3, country3, label3, iban3, bic3);
 
 		try {
-			Response createAccountResponse=createNewAccount(account3);
+			Response createAccountResponse = createNewAccount(account3);
 			assertEquals(createAccountResponse.getStatus(), Status.CREATED.getStatusCode());
 			List<Account> accounts2 = getAllAccounts();
-			assertTrue(accounts2.containsAll(Arrays.asList(account1,account3)));
+			assertTrue(accounts2.containsAll(Arrays.asList(account1, account3)));
 			Account account_3 = getAccountByPhoneCurrency(account3.getAccountID());
 			assertEquals(account3, account_3);
 		} catch (Exception e) {
@@ -215,12 +343,11 @@ public class MoneyTransfersAPITest extends JerseyTest {
 		Account accountFromDB = null;
 		try {
 			accountService.save(account);
-			accountFromDB = accountService.findAccountByID("000000",
-					"GBP").get();
+			accountFromDB = accountService.findAccountByID("000000", "GBP").get();
 
 		} catch (Exception e) {
 			e.printStackTrace();
-			fail("testCDI fail "+e.getMessage());
+			fail("testCDI fail " + e.getMessage());
 		}
 		assertNotNull(accountFromDB);
 		assertEquals(account, accountFromDB);
@@ -246,10 +373,10 @@ public class MoneyTransfersAPITest extends JerseyTest {
 		Account account4 = new Account(beneficiary4, currency4, country4, label4, iban4, bic4);
 
 		try {
-			Response createAccount4Response=createNewAccount(account4);
+			Response createAccount4Response = createNewAccount(account4);
 			assertEquals(createAccount4Response.getStatus(), Status.CREATED.getStatusCode());
-			
-			Assert.assertTrue(getAllAccounts(phone4).contains( account4));
+
+			Assert.assertTrue(getAllAccounts(phone4).contains(account4));
 		} catch (Exception e) {
 			logger.error(e.getMessage());
 			fail(e.getMessage());
@@ -301,7 +428,7 @@ public class MoneyTransfersAPITest extends JerseyTest {
 		String bic6 = "BIC Italy 544 000";
 		Account account6 = new Account(beneficiary6, currency6, country6, label6, iban6, bic6);
 		// invoke Account/newAccount endPoint to create a new Account from JSON
-		Response createAccount6Response=createNewAccount(account6);
+		Response createAccount6Response = createNewAccount(account6);
 		assertEquals(createAccount6Response.getStatus(), Status.CREATED.getStatusCode());
 		double newAmount = 7690.96;
 		TopUpParams topUpParams = new TopUpParams(phone6, currency6, newAmount);
@@ -366,7 +493,7 @@ public class MoneyTransfersAPITest extends JerseyTest {
 
 		double newAmount = 67859.86;
 		TopUpParams topUpParams = new TopUpParams(phone7, currency7, newAmount);
-// invoke Account/topUpAccount endPoint twice to topUp the sixth account by 7690.96*2
+		// invoke Account/topUpAccount endPoint twice to topUp the sixth account by 7690.96*2
 		try {
 			target("Account/topUpAccount").request().post(Entity.json(topUpParams));
 
@@ -388,4 +515,5 @@ public class MoneyTransfersAPITest extends JerseyTest {
 		}
 
 	}
+
 }

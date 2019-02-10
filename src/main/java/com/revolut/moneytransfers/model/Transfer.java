@@ -10,6 +10,7 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.JoinColumns;
 import javax.persistence.ManyToOne;
+import javax.persistence.Transient;
 
 import lombok.Data;
 
@@ -32,7 +33,8 @@ public class Transfer implements Serializable {
 	/**
 	 * serialVersionUID
 	 */
-	private static final long serialVersionUID = 1L;
+	@Transient
+	private transient static final long serialVersionUID = 1L;
 	
 	@Id
 	@GeneratedValue(strategy = GenerationType.SEQUENCE)
@@ -86,6 +88,10 @@ public class Transfer implements Serializable {
 	@Override
 	public int hashCode() {
 		return (int) this.id;
+	}
+	
+	public boolean isPersisted() {
+		return id!=0;
 	}
 
 }

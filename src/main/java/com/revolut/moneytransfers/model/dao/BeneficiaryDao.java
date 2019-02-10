@@ -1,5 +1,6 @@
 package com.revolut.moneytransfers.model.dao;
 
+import java.util.List;
 import java.util.Optional;
 
 import com.revolut.moneytransfers.model.Beneficiary;
@@ -27,14 +28,39 @@ public interface BeneficiaryDao {
 	 * @throws Exception
 	 */
 	Beneficiary save(Beneficiary beneficiary) throws Exception;
-	
+
 	/**
-	 * find the beneficiary  having the provided phone number.
+	 * find the beneficiary having the provided phone number.
 	 *
 	 *
 	 * @param phone String.
-	 * @return The beneficiary wraped in an {@code Optional<Beneficiary>} if exists, Otherwise returns Optional<null> .
+	 * @return The beneficiary wraped in an {@code Optional<Beneficiary>} if exists,
+	 *         Otherwise returns Optional<null> .
 	 * @throws Exception
 	 */
 	Optional<Beneficiary> find(String phone) throws Exception;
+
+	/**
+	 * select all beneficiaries in the database.
+	 *
+	 * @return All beneficiaries in DB .
+	 * @throws Exception
+	 */
+	public List<Beneficiary> findAll() throws Exception;
+
+	/**
+	 * Purges the beneficiary table
+	 * 
+	 * @throws Exception
+	 */
+	public void emptyDb() throws Exception;
+	
+	/**
+	 * 
+	 * @param benifeciary {@code Beneficiary}
+	 * @return true if the beneficiary exist in DB. Otherwise returns false;
+	 * @throws Exception
+	 */
+	public boolean isPersistent(Beneficiary beneficiary) throws Exception;
+
 }
