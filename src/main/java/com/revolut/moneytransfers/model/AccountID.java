@@ -9,6 +9,7 @@ import lombok.Data;
 @Embeddable
 @Data
 public class AccountID implements Serializable {
+	
 	/**
 	 * serialVersionUID
 	 */
@@ -24,19 +25,26 @@ public class AccountID implements Serializable {
 		super();
 		this.currency = currency;
 	}
-	
 
 	@Override
 	public boolean equals(Object obj) {
-		if (!(obj instanceof AccountID))
+		if (obj == this)
+			return true;
+		if (obj == null || !(obj instanceof AccountID)) {
 			return false;
+		}
 		AccountID accountID = (AccountID) obj;
+		if (phone == null ||currency==null||accountID.phone==null||accountID.currency==null)
+		{
+			return false;
+		}
 		return phone.equals(accountID.phone) && currency.equals(accountID.currency);
 	}
 
 	@Override
 	public int hashCode() {
-		return new StringBuilder(phone).append(currency).toString().hashCode();
+		return (phone != null || currency != null) ? new StringBuilder((phone != null) ? phone : "")
+				.append((currency != null) ? currency : "").toString().hashCode() : 0;
 	}
 
 	public AccountID(String phone, String currency) {

@@ -1,10 +1,14 @@
 package com.revolut.moneytransfers.model;
 
+import java.io.Serializable;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.JoinColumns;
 import javax.persistence.ManyToOne;
 
 import lombok.Data;
@@ -24,20 +28,33 @@ import lombok.Data;
  */
 @Data
 @Entity
-public class Transfer {
+public class Transfer implements Serializable {
+	/**
+	 * serialVersionUID
+	 */
+	private static final long serialVersionUID = 1L;
+	
 	@Id
 	@GeneratedValue(strategy = GenerationType.SEQUENCE)
 	long id;
 	@ManyToOne
+	@JoinColumns({
+	@JoinColumn(name="debitedPhone",referencedColumnName="phone",nullable=false,updatable=false),@JoinColumn(name="debitedCurrency",referencedColumnName="currency",nullable=false,updatable=false)})
 	private Account debitedAccount;
+	@JoinColumns({
+		@JoinColumn(name="creditedPhone",referencedColumnName="phone",nullable=false,updatable=false),@JoinColumn(name="creditedCurrency",referencedColumnName="currency",nullable=false,updatable=false)})
 	@ManyToOne
 	private Account creditedAccount;
+	@Column(nullable=false,updatable=false)
 	private double amount;
 	private String reference;
 	@Column(length = 3600)
 	private String comment;
+	@Column(nullable=false,updatable=false)
 	private long time;
+	@Column(nullable=false,updatable=false)
 	private double exchangeRate;
+
 	@Deprecated
 	public Transfer() {
 		super();
@@ -52,7 +69,23 @@ public class Transfer {
 		this.reference = reference;
 		this.comment = comment;
 		this.time = time;
-		this.exchangeRate=exchangeRate;
+		this.exchangeRate = exchangeRate;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (obj == this)
+			return true;
+		if (obj == null || !(obj instanceof Transfer)) {
+			return false;
+		}
+		Transfer transfer = (Transfer) obj;
+		return this.id == transfer.id;
+	}
+
+	@Override
+	public int hashCode() {
+		return (int) this.id;
 	}
 
 }

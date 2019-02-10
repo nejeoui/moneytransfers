@@ -59,7 +59,7 @@ public interface AccountDao {
 	 *         {@code null} )
 	 * @throws Exception
 	 */
-	Optional<Account> selectByBeneficiaryPhoneAndCurrency(String phone, String currency) throws Exception;
+	Optional<Account> findAccountByID(String phone, String currency) throws Exception;
 
 	Optional<Account> topUp(Account account);
 

@@ -27,8 +27,8 @@ public class AccountService {
 		return accountDao.selectByBeneficiaryPhone(phone);
 	}
 
-	public Optional<Account> selectByBeneficiaryPhoneAndCurrency(String phone, String currency) throws Exception {
-		return accountDao.selectByBeneficiaryPhoneAndCurrency(phone, currency);
+	public Optional<Account> findAccountByID(String phone, String currency) throws Exception {
+		return accountDao.findAccountByID(phone, currency);
 	}
 
 	public Optional<Account> topUp(Account account) {

@@ -14,6 +14,7 @@ public class EMFProducer {
         return Persistence.createEntityManagerFactory("RevolutUnit1");
     }
 
+    
     public void destroy(@Disposes EntityManagerFactory factory) {
         factory.close();
     }

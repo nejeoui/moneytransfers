@@ -5,13 +5,16 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.util.Arrays;
 import java.util.List;
 
 import javax.enterprise.inject.se.SeContainer;
 import javax.inject.Inject;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Application;
+import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
 
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.test.JerseyTest;
@@ -46,7 +49,15 @@ import com.revolut.moneytransfers.service.rest.TransferRest;
 @RunWith(InjectionRunner.class)
 public class MoneyTransfersAPITest extends JerseyTest {
 	/**
-	 * AccountService instance
+	 * Delta value for comparing doubles with assertEquals
+	 */
+	private static final double DELTA = 1e-15;
+
+	private static final GenericType<List<Account>> ListAccountsGeneriqType = new GenericType<List<Account>>() {
+			};
+
+	/**
+	 * AccountService instance for the sake of CDI Test
 	 */
 	@Inject
 	AccountService accountService;
@@ -65,7 +76,7 @@ public class MoneyTransfersAPITest extends JerseyTest {
 	}
 
 	@Test
-	public void create2AccountSameBeneficiary() {
+	public void create2Account() {
 		Beneficiary beneficiary1 = new Beneficiary();
 		String phone = "21266012346";
 		String firstName = "Abderrazzak";
@@ -90,24 +101,20 @@ public class MoneyTransfersAPITest extends JerseyTest {
 		String iban2 = "IBAN Test 222 42256";
 		String bic2 = "BIC Test 222 03312";
 
-		Account account2 = new Account(beneficiary1, currency2, country2, label2, iban2, bic2);
-
 		try {
-			accountService.save(account1);
-			accountService.save(account2);
+			Response createAccountResponse=createNewAccount(account1);
+			assertEquals(createAccountResponse.getStatus(), Status.CREATED.getStatusCode());
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
 			logger.error(e.getMessage());
 		}
 
 		try {
-			// reteive all accounts from DB
-			List<Account> accounts = accountService.selectByBeneficiaryPhone(phone);
-			assertTrue(accounts.size() >= 2);
+			// reteive all accounts 
+			List<Account> accounts = getAllAccounts();
+			assertTrue(accounts.contains(account1));
 
-			// retreive account1 from DB
-			Account account_1 = accountService.selectByBeneficiaryPhoneAndCurrency(beneficiary1.getPhone(), currency1)
-					.get();
+			// retreive account1 
+			Account account_1 = getAccountByPhoneCurrency(account1.getAccountID());
 
 			assertEquals(account1, account_1);
 		} catch (Exception e) {
@@ -130,17 +137,34 @@ public class MoneyTransfersAPITest extends JerseyTest {
 		Account account3 = new Account(beneficiary2, currency3, country3, label3, iban3, bic3);
 
 		try {
-			accountService.save(account3);
-			List<Account> accounts2 = accountService.selectAll();
-			assertTrue(accounts2.size() >= 3);
-			Account account_3 = accountService.selectByBeneficiaryPhoneAndCurrency(beneficiary2.getPhone(), currency3)
-					.get();
+			Response createAccountResponse=createNewAccount(account3);
+			assertEquals(createAccountResponse.getStatus(), Status.CREATED.getStatusCode());
+			List<Account> accounts2 = getAllAccounts();
+			assertTrue(accounts2.containsAll(Arrays.asList(account1,account3)));
+			Account account_3 = getAccountByPhoneCurrency(account3.getAccountID());
 			assertEquals(account3, account_3);
 		} catch (Exception e) {
+			e.printStackTrace();
 			logger.error(e.getMessage());
 			fail(e.getMessage());
 		}
 
+	}
+
+private Response createNewAccount(Account account) {
+return	target("Account/newAccount").request().put(Entity.json(account));
+	}
+
+private Account getAccountByPhoneCurrency(AccountID accountID) {
+		return target("Account/id").request().post(Entity.json(accountID)).readEntity(Account.class);
+	}
+
+private List<Account> getAllAccounts() {
+	return target("Account/AllAccounts/" ).request().get().readEntity(ListAccountsGeneriqType);
+	}
+
+private List<Account> getAllAccounts(String phone) {
+	return target("Account/" + phone).request().get().readEntity(ListAccountsGeneriqType);
 	}
 
 //	@Test
@@ -164,12 +188,12 @@ public class MoneyTransfersAPITest extends JerseyTest {
 		Account accountFromDB = null;
 		try {
 			accountService.save(account);
-			accountFromDB = accountService.selectByBeneficiaryPhoneAndCurrency(account.getAccountID().getPhone(),
-					account.getAccountID().getCurrency()).get();
+			accountFromDB = accountService.findAccountByID("000000",
+					"GBP").get();
 
 		} catch (Exception e) {
 			e.printStackTrace();
-			fail(e.getMessage());
+			fail("testCDI fail "+e.getMessage());
 		}
 		assertNotNull(accountFromDB);
 		assertEquals(account, accountFromDB);
@@ -195,15 +219,10 @@ public class MoneyTransfersAPITest extends JerseyTest {
 		Account account4 = new Account(beneficiary4, currency4, country4, label4, iban4, bic4);
 
 		try {
-			accountService.save(account4);
-			List<Account> accounts4 = accountService.selectAll();
-			assertTrue(accounts4.size() >= 1);
-			Account account_4 = accountService.selectByBeneficiaryPhoneAndCurrency(beneficiary4.getPhone(), currency4)
-					.get();
-			assertEquals(account4, account_4);
-			String response = target("Account/" + phone4).request().get(String.class);
-			logger.info("response : " + response);
-			Assert.assertTrue(response.contains(iban4));
+			Response createAccount4Response=createNewAccount(account4);
+			assertEquals(createAccount4Response.getStatus(), Status.CREATED.getStatusCode());
+			
+			Assert.assertTrue(getAllAccounts(phone4).contains( account4));
 		} catch (Exception e) {
 			logger.error(e.getMessage());
 			fail(e.getMessage());
@@ -229,10 +248,11 @@ public class MoneyTransfersAPITest extends JerseyTest {
 		String bic5 = "BIC Test 777 999";
 		Account account5 = new Account(beneficiary5, currency5, country5, label5, iban5, bic5);
 		// invoke Account/newAccount endPoint to create a new Account from JSON
-		target("Account/newAccount").request().put(Entity.json(account5));
-		String response = target("Account/" + phone5).request().get(String.class);
+		Response createAccountResponse = createNewAccount(account5);
+		assertEquals(createAccountResponse.getStatus(), Status.CREATED.getStatusCode());
+		Response response = target("Account/id").request().post(Entity.json(account5.getAccountID()));
 		logger.info("response Entity : " + response);
-		Assert.assertTrue(response.contains(iban5));
+		Assert.assertEquals(response.readEntity(Account.class).getAccountID(), account5.getAccountID());
 
 	}
 
@@ -254,19 +274,24 @@ public class MoneyTransfersAPITest extends JerseyTest {
 		String bic6 = "BIC Italy 544 000";
 		Account account6 = new Account(beneficiary6, currency6, country6, label6, iban6, bic6);
 		// invoke Account/newAccount endPoint to create a new Account from JSON
-		target("Account/newAccount").request().put(Entity.json(account6));
+		Response createAccount6Response=createNewAccount(account6);
+		assertEquals(createAccount6Response.getStatus(), Status.CREATED.getStatusCode());
 		double newAmount = 7690.96;
 		TopUpParams topUpParams = new TopUpParams(phone6, currency6, newAmount);
 		// invoke Account/topUpAccount endPoint twice to topUp the sixth account by
 		// 7690.96*2
-		target("Account/topUpAccount").request().post(Entity.json(topUpParams));
-		target("Account/topUpAccount").request().post(Entity.json(topUpParams));
-		// invoke Account/ endPoint to retrieve the modified sixth account
-		String response = target("Account/" + phone6).request().get(String.class);
-		logger.info("topUp response Message : " + response);
-		// test the new balance
-		Assert.assertTrue(response.contains(String.valueOf(newAmount * 2)));
+		Response topUpResponse = target("Account/topUpAccount").request().post(Entity.json(topUpParams));
+		logger.info("topUpResponse.getStatus() = " + topUpResponse.getStatus());
+		assertEquals(topUpResponse.getStatus(), Status.CREATED.getStatusCode());
+		topUpResponse = target("Account/topUpAccount").request().post(Entity.json(topUpParams));
 
+		assertEquals(topUpResponse.getStatus(), Status.CREATED.getStatusCode());
+		// invoke Account/ endPoint to retrieve the modified sixth account
+		Response getAccountResponse = target("Account/id").request().post(Entity.json(account6.getAccountID()));
+		assertEquals(getAccountResponse.getStatus(), Status.OK.getStatusCode());
+		logger.info("getAccountsResponse response Message : " + getAccountResponse.getEntity().toString());
+		// test the new balance
+		Assert.assertEquals(getAccountResponse.readEntity(Account.class).getBalance(), newAmount * 2, DELTA);
 	}
 
 	/**
@@ -323,12 +348,12 @@ public class MoneyTransfersAPITest extends JerseyTest {
 			logger.info("Test instance TransferDTO : " + transferDTO.toString());
 			Response rsp = target("Transfers/transfer/").request().put(Entity.json(transferDTO));
 			logger.info("rsp ::: " + rsp.toString());
-			Account account_7 = accountService.selectByBeneficiaryPhoneAndCurrency(phone7, currency7).get();
-			Account account_8 = accountService.selectByBeneficiaryPhoneAndCurrency(phone8, currency8).get();
+			Account account_7 = getAccountByPhoneCurrency(account7.getAccountID());
+			Account account_8 = getAccountByPhoneCurrency(account8.getAccountID());
 			logger.info("account_7 = " + account_7);
 			logger.info("account_8 = " + account_8);
-			assertEquals(account_7.getBalance(), 67859.86 - 450.0, 0.00000000000001);
-			assertEquals(account_8.getBalance(), 0 + 450.0 * TransferService.DUMMYTRANSFER_RATE, 0.00000000000001);
+			assertEquals(account_7.getBalance(), 67859.86 - 450.0, DELTA);
+			assertEquals(account_8.getBalance(), 0 + 450.0 * TransferService.DUMMYTRANSFER_RATE, DELTA);
 		} catch (Exception e) {
 			e.printStackTrace();
 			logger.error(e.getMessage());

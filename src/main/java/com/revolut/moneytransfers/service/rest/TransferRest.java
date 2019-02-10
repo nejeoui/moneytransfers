@@ -52,10 +52,10 @@ public class TransferRest {
 		Optional<Account> toBeDebitedAccountOptional = null;
 		Optional<Account> toBeCreditedAccountOptional = null;
 		try {
-			toBeDebitedAccountOptional = accountService.selectByBeneficiaryPhoneAndCurrency(
+			toBeDebitedAccountOptional = accountService.findAccountByID(
 					transferDTO.getDebitedAccountID().getPhone(), transferDTO.getDebitedAccountID().getCurrency());
 
-			toBeCreditedAccountOptional = accountService.selectByBeneficiaryPhoneAndCurrency(
+			toBeCreditedAccountOptional = accountService.findAccountByID(
 					transferDTO.getCreditedAccountID().getPhone(), transferDTO.getCreditedAccountID().getCurrency());
 		} catch (Exception e) {
 			logger.info("Invalide Accounts: ");
@@ -79,7 +79,7 @@ public class TransferRest {
 		} catch (Exception e) {
 			logger.info("Invalide Transfer: ");
 			e.printStackTrace();
-			return Response.status(Response.Status.CONFLICT).entity(e.getMessage()).build();
+			return Response.status(Response.Status.SERVICE_UNAVAILABLE).entity(e.getMessage()).build();
 		}
 
 		return Response.status(Status.OK).build();

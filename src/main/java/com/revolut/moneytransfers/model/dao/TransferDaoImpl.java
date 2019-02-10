@@ -47,6 +47,9 @@ public class TransferDaoImpl implements TransferDao {
 		try {
 			
 			em.getTransaction().begin();
+			/**
+			 * Debited account and Credited account are acquired with PESSIMISTIC_WRITE Lock
+			 */
 			Account toBeCredeited = em.find(Account.class, receiver,LockModeType.PESSIMISTIC_WRITE);
 			Account toBeDebited = em.find(Account.class, sender,LockModeType.PESSIMISTIC_WRITE);
 			// debtor balance not authorized by Revolut
