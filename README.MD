@@ -52,11 +52,11 @@ mvn test
 mvn exec:java -Dexec.mainClass="com.revolut.moneytransfers.App"
 ```
 # Future enhancement 
--Add support for distributed transaction and Two Phase Commit Protocol 2PC
--Security 
--Recurrent payment processing using Batch (JSR 352)
-#Logs
-1- [Test Log](TestLog.MD)
-2- [Run Log](execLog.MD)
-3- [Init System Crash Log](InitSystemCrash.MD)
-4- [Transaction Recovery after crash](DBRecoveryAfterCrash.MD)
+- Add support for distributed transaction and Two Phase Commit Protocol 2PC
+- Security 
+- Recurrent payment processing using Batch (JSR 352)
+# Logs
+1. [Test Log](TestLog.MD)
+2. [Run Log](execLog.MD)
+3. [Init System Crash Log](InitSystemCrashLog.MD)
+4. [Transaction Recovery after crash](DBRecoveryAfterCrashLog.MD)
