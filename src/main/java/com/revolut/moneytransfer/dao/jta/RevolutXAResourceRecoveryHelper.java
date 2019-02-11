@@ -13,6 +13,7 @@ import javax.inject.Inject;
 import javax.transaction.xa.XAResource;
 
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.arjuna.ats.jta.recovery.XAResourceRecoveryHelper;
 
@@ -32,7 +33,7 @@ public class RevolutXAResourceRecoveryHelper implements XAResourceRecoveryHelper
 	 * Self4j Logger
 	 */
 	@Inject
-	private transient Logger logger;
+	private transient Logger logger=LoggerFactory.getLogger(RevolutXAResourceRecoveryHelper.class);
 	
 	@Override
 	public boolean initialise(String p) throws Exception {

@@ -15,6 +15,7 @@ import javax.transaction.xa.XAResource;
 import javax.transaction.xa.Xid;
 
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.arjuna.ats.arjuna.common.Uid;
 
@@ -33,7 +34,7 @@ public class RevolutXAResource implements XAResource {
 	 * Self4j Logger
 	 */
 	@Inject
-	private transient Logger logger;
+	private transient Logger logger=LoggerFactory.getLogger(RevolutXAResource.class);
 	
 	public static final String XA_Folder = "target/xaTransactionFolder/RevolutXAResource/";
 

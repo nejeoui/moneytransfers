@@ -8,6 +8,7 @@ import static org.junit.Assert.fail;
 import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Random;
 
 import javax.enterprise.inject.se.SeContainer;
 import javax.inject.Inject;
@@ -37,6 +38,7 @@ import com.arjuna.ats.jta.utils.JNDIManager;
 import com.revolut.moneytransfer.dao.jta.BeneficiaryDaoJTAImpl;
 import com.revolut.moneytransfer.dao.jta.JtaPropertyManager;
 import com.revolut.moneytransfer.dao.jta.RecoveryPropertyManager;
+import com.revolut.moneytransfer.dao.jta.RevolutXAResource;
 import com.revolut.moneytransfer.dao.jta.RevolutXAResourceRecoveryHelper;
 import com.revolut.moneytransfer.dao.jta.TransactionalProvider;
 import com.revolut.moneytransfers.App;
@@ -201,9 +203,33 @@ public class MoneyTransfersAPITest extends JerseyTest {
 	}
 
 	/**
-	 * Create a new Beneficiary Using JTA API
+	 * Test JTA and Recovery Mode this method will run randomly one of 3 methods : 1
+	 * addNewBeneficiaryJTA 2 simulateCrash 3 testRecoveryAfterCrash
 	 */
 	@Test
+	public void testJTA() {
+		logger.info(" testJTA starting");
+		switch (new Random().nextInt(4)) {
+		case 1:
+			addNewBeneficiaryJTA();
+			break;
+		case 2:
+			simulateCrash();
+			break;
+		case 3:
+			try {
+				testRecoveryAfterCrash();
+			} catch (Exception e) {
+				logger.error(e.getMessage());
+				e.printStackTrace();
+			}
+		}
+		logger.info(" testJTA End");
+	}
+
+	/**
+	 * Create a new Beneficiary Using JTA API
+	 */
 	public void addNewBeneficiaryJTA() {
 		logger.error(" addNewBeneficiaryJTA starting");
 		Beneficiary beneficiary = new Beneficiary();
@@ -218,11 +244,68 @@ public class MoneyTransfersAPITest extends JerseyTest {
 			beneficiaryDaoJTAImpl.save(beneficiary);
 			transactionManager.commit();
 			Beneficiary fromDB = beneficiaryDaoJTAImpl.find(phone).get();
-			logger.info("Retrieved from DB using JTA "+fromDB);
+			logger.info("Retrieved from DB using JTA " + fromDB);
 			assertNotNull(fromDB);
 		} catch (Exception e) {
 			logger.error(e.getMessage());
 			fail(e.getMessage());
+		}
+	}
+
+	/**
+	 * Simulate System Crash to test recovery mode
+	 */
+	public void simulateCrash() {
+		logger.error(" simulateCrash starting");
+		Beneficiary beneficiary = new Beneficiary();
+		String phone = "4444477777";
+		String firstName = "Haar";
+		String lastName = "Norving";
+		beneficiary.setPhone(phone);
+		beneficiary.setFirstName(firstName);
+		beneficiary.setLastName(lastName);
+		try {
+			transactionManager.begin();
+			beneficiaryDaoJTAImpl.save(beneficiary);
+			logger.info("Beneficiaries in DB at start : " + beneficiaryDaoJTAImpl.findAll());
+
+			Beneficiary beneficiary2 = new Beneficiary();
+			String phone2 = "88886666";
+			String firstName2 = "Bool";
+			String lastName2 = "James";
+			beneficiary2.setPhone(phone2);
+			beneficiary2.setFirstName(firstName2);
+			beneficiary2.setLastName(lastName2);
+			RevolutXAResource xaResource = new RevolutXAResource(true);
+			transactionManager.getTransaction().enlistResource(xaResource);
+			beneficiaryDaoJTAImpl.save(beneficiary2);
+			logger.info("Beneficiaries in DB at end : " + beneficiaryDaoJTAImpl.findAll());
+			transactionManager.commit();
+		} catch (Exception e) {
+			e.printStackTrace();
+			logger.error(e.getMessage());
+			fail(e.getMessage());
+		}
+	}
+
+	public void testRecoveryAfterCrash() throws Exception {
+		List<Beneficiary> entriesBefore = beneficiaryDaoJTAImpl.findAll();
+		logger.info("Beneficiaries before recovery: " + entriesBefore);
+		RecoveryManager.manager().startRecoveryManagerThread();
+		waitForRecovery(entriesBefore);
+		logger.info("Beneficiaries after recovery: " + beneficiaryDaoJTAImpl.findAll());
+	}
+
+	private void waitForRecovery(List<Beneficiary> entriesBefore) throws Exception {
+		boolean isComplete = false;
+
+		for (int i = 0; i < 4 && !isComplete; i++) {
+			try {
+				Thread.sleep(8500);
+			} catch (InterruptedException e) {
+				Thread.currentThread().interrupt();
+			}
+			isComplete = entriesBefore.size() < beneficiaryDaoJTAImpl.findAll().size();
 		}
 	}
 
@@ -410,9 +493,9 @@ public class MoneyTransfersAPITest extends JerseyTest {
 		// invoke Account/newAccount endPoint to create a new Account from JSON
 		Response createAccountResponse = createNewAccount(account5);
 		assertEquals(createAccountResponse.getStatus(), Status.CREATED.getStatusCode());
-		Response response = target("Account/id").request().post(Entity.json(new AccountID(phone5,currency5)));
+		Response response = target("Account/id").request().post(Entity.json(new AccountID(phone5, currency5)));
 		logger.info("response Entity : " + response);
-		Assert.assertEquals(response.readEntity(Account.class).getAccountID(), new AccountID(phone5,currency5));
+		Assert.assertEquals(response.readEntity(Account.class).getAccountID(), new AccountID(phone5, currency5));
 
 	}
 
@@ -448,7 +531,7 @@ public class MoneyTransfersAPITest extends JerseyTest {
 		assertEquals(topUpResponse.getStatus(), Status.CREATED.getStatusCode());
 		// invoke Account/ endPoint to retrieve the modified sixth account
 		// for test purpose we will set phone for account6
-					account6.getAccountID().setPhone(phone6);
+		account6.getAccountID().setPhone(phone6);
 		Response getAccountResponse = target("Account/id").request().post(Entity.json(account6.getAccountID()));
 		assertEquals(getAccountResponse.getStatus(), Status.OK.getStatusCode());
 		logger.info("getAccountsResponse response Message : " + getAccountResponse.getEntity().toString());
@@ -501,7 +584,8 @@ public class MoneyTransfersAPITest extends JerseyTest {
 
 		double newAmount = 67859.86;
 		TopUpParams topUpParams = new TopUpParams(phone7, currency7, newAmount);
-		// invoke Account/topUpAccount endPoint twice to topUp the sixth account by 7690.96*2
+		// invoke Account/topUpAccount endPoint twice to topUp the sixth account by
+		// 7690.96*2
 		try {
 			target("Account/topUpAccount").request().post(Entity.json(topUpParams));
 
@@ -510,8 +594,8 @@ public class MoneyTransfersAPITest extends JerseyTest {
 			logger.info("Test instance TransferDTO : " + transferDTO.toString());
 			Response rsp = target("Transfers/transfer/").request().put(Entity.json(transferDTO));
 			logger.info("rsp ::: " + rsp.toString());
-			Account account_7 = getAccountByPhoneCurrency(new AccountID(phone7,currency7));
-			Account account_8 = getAccountByPhoneCurrency(new AccountID(phone8,currency8));
+			Account account_7 = getAccountByPhoneCurrency(new AccountID(phone7, currency7));
+			Account account_8 = getAccountByPhoneCurrency(new AccountID(phone8, currency8));
 			logger.info("account_7 = " + account_7);
 			logger.info("account_8 = " + account_8);
 			assertEquals(account_7.getBalance(), 67859.86 - 450.0, DELTA);
