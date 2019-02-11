@@ -33,7 +33,7 @@
 		<class>com.revolut.moneytransfers.model.Transfer</class>
         <properties>
             <property name="hibernate.dialect" value="org.hibernate.dialect.H2Dialect"/>
-            <property name="hibernate.hbm2ddl.auto" value="create-drop"/>
+            <property name="hibernate.hbm2ddl.auto" value="update"/>
             <property name="hibernate.transaction.jta.platform" value="JBossTS"/>
             <property name="hibernate.connection.provider_class" value="com.revolut.moneytransfer.dao.jta.TransactionalProvider" />
         </properties>
