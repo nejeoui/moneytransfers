@@ -1,7 +1,7 @@
 # Money Transfers
 ===========================================================================
 ## Java lightweight Restful API for Money Transfers
-### Money Transfers API run as standalone application :
+### Money Transfers API run as a standalone application :
 Technologies : 
 JPA
 Hibernate
@@ -38,12 +38,12 @@ runs the following tests :
   Service Endpoint : http://localhost:8080/Account/AllAccounts/
 7-TopUp an account
  Service Endpoint : http://localhost:8080/Account/topUpAccount
-8-Money Transfer betwwen two accounts 
+8-Money Transfer between two accounts 
  Service Endpoint : http://localhost:8080/Transfers/transfer/
 9-Add Beneficiary using JTA 
 10-Simulate System crash and Recovery mode
 ```
-## Run the RESTful API
+## Run the Junit Tests
 ```
 mvn test
 ```
@@ -57,6 +57,6 @@ mvn exec:java -Dexec.mainClass="com.revolut.moneytransfers.App"
 - Recurrent payment processing using Batch (JSR 352)
 # Logs
 1. [Test Log](TestLog.MD)
-2. [Run Log](execLog.MD)
+2. [Run Log](excLog.MD)
 3. [Init System Crash Log](InitSystemCrashLog.MD)
 4. [Transaction Recovery after crash](DBRecoveryAfterCrashLog.MD)
